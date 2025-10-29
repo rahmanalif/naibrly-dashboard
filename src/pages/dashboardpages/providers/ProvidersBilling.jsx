@@ -1,0 +1,24 @@
+import ActivityTimeline from '@/components/dashboardcomponents/providercomponents/ActivityTimeline';
+import ProviderCard from '@/components/dashboardcomponents/providercomponents/ProviderCard';
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+const ProvidersBilling = () => {
+    return (
+        <div className='w-full flex gap-6'>
+            <div className='flex-1/4'>
+                <ProviderCard></ProviderCard>
+            </div>
+
+            <div className='flex-3/4'>
+                <div className='flex flex-row gap-3 mb-4'>
+                    <Link to="/dashboard/providers/provideraccount" className="btn p-3 text-sm font-semibold">Account</Link>
+                    <Link to="/dashboard/providers/providerbilling" className="btn p-3 font-semibold text-sm bg-[#0E7A601A]/90 rounded-lg border border-[#0E7A60]">Billing</Link>
+                </div>
+                <ActivityTimeline></ActivityTimeline>
+            </div>
+        </div>
+    );
+};
+
+export default ProvidersBilling;
