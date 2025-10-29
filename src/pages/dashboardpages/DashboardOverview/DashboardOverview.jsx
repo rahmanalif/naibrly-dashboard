@@ -1,5 +1,5 @@
 import React from "react";
-import StatsSection from "../../../components/dashboardcomponents/dashboardOverview/StatsSection";
+import StatsSection from "@/components/dashboardcomponents/dashboardOverview/StatsSection";
 import PaymentHistory from "@/components/dashboardcomponents/payment/PaymentHistory";
 import StatsDashboard from "@/components/dashboardcomponents/dashboardOverview/StatsDashboard";
 import DashPayment from "@/components/dashboardcomponents/dashboardOverview/DashPayment";

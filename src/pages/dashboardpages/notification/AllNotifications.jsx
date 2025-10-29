@@ -46,7 +46,7 @@ const notifications = [
     reportedBy: "Sarah Asher",
     against: "Service Provider: HomeFix Ltd.",
     reason: "Poor Service / Misbehavior",
-    date: "October 5, 2025",
+    dateReported: "October 5, 2025",
     date: "Aug 12, 2025",
   },
 ];

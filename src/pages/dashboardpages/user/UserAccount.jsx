@@ -1,5 +1,5 @@
 import UserActivity from '@/components/dashboardcomponents/usercomponents/UserActivity';
-import UserCard from '@/components/dashboardcomponents/usercomponents/usercard';
+import UserCard from '@/components/dashboardcomponents/usercomponents/UserCard';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
