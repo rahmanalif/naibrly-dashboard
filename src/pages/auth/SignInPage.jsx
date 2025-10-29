@@ -7,6 +7,7 @@
 // export default SignInPage;
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button"; // ShadCN Button
 import { Eye, EyeOff } from "lucide-react"; // Eye icons for password visibility toggle
 import logo from "@/assets/logo.svg"; // Import logo from assets
@@ -14,10 +15,18 @@ import logo from "@/assets/logo.svg"; // Import logo from assets
 const SignInPage = () => {
   // State for handling password visibility
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const navigate = useNavigate();
 
   // Toggle password visibility
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
+  };
+
+  // Handle sign-in logic
+  const handleSignIn = () => {
+    // Here you would typically handle authentication
+    // For now, we'll just navigate to the dashboard
+    navigate("/dashboard");
   };
 
   return (
@@ -33,10 +42,14 @@ const SignInPage = () => {
         <h2 className="text-2xl font-semibold text-center mb-4">Sign In</h2>
 
         {/* Form Fields */}
-        <form>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault(); // Prevent form submission
+            handleSignIn();
+          }}
+        >
           {/* Username Field */}
           <div className="mb-4">
-
             <input
               type="text"
               id="username"
@@ -48,7 +61,6 @@ const SignInPage = () => {
 
           {/* Password Field */}
           <div className="mb-4 relative">
-
             <input
               type={isPasswordVisible ? "text" : "password"} // Toggle between password and text
               id="password"
@@ -69,14 +81,26 @@ const SignInPage = () => {
           {/* Remember Me & Forgot Password */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <input type="checkbox" id="remember" name="remember" className="h-4 w-4 text-green-500 border-gray-300 rounded" />
-              <label htmlFor="remember" className="text-sm text-gray-700">Remember me</label>
+              <input
+                type="checkbox"
+                id="remember"
+                name="remember"
+                className="h-4 w-4 text-green-500 border-gray-300 rounded"
+              />
+              <label htmlFor="remember" className="text-sm text-gray-700">
+                Remember me
+              </label>
             </div>
-            <a href="/forgotpass" className="text-sm text-black hover:text-black">Forgot password?</a>
+            <a href="/forgotpass" className="text-sm text-black hover:text-black">
+              Forgot password?
+            </a>
           </div>
 
           {/* Sign In Button */}
-          <Button className="w-full py-2 bg-[#0E7A60] text-white rounded-md hover:bg-[#0E7A60]">
+          <Button
+            type="submit" // Change to submit to trigger form submission
+            className="w-full py-2 bg-[#0E7A60] text-white rounded-md hover:bg-[#0E7A60]"
+          >
             Sign In
           </Button>
         </form>
