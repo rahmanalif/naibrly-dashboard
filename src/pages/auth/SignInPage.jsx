@@ -11,10 +11,13 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button"; // ShadCN Button
 import { Eye, EyeOff } from "lucide-react"; // Eye icons for password visibility toggle
 import logo from "@/assets/logo.svg"; // Import logo from assets
+import api from "@/lib/api"; // Import API client
 
 const SignInPage = () => {
   // State for handling password visibility
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   // Toggle password visibility
@@ -23,10 +26,47 @@ const SignInPage = () => {
   };
 
   // Handle sign-in logic
-  const handleSignIn = () => {
-    // Here you would typically handle authentication
-    // For now, we'll just navigate to the dashboard
-    navigate("/dashboard");
+  const handleSignIn = async (e) => {
+    if (e) e.preventDefault();
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    // Clear previous errors
+    setError("");
+
+    // Validate inputs
+    if (!username || !password) {
+      setError("Please enter both username and password");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      console.log("Attempting login with:", { username, baseURL: import.meta.env.VITE_API_BASE_URL });
+      const response = await api.post("/admin/login", {
+        username,
+        password,
+      });
+
+      console.log("Login response:", response.data);
+
+      if (response.data.success) {
+        localStorage.setItem("token", response.data.data.token);
+        localStorage.setItem("admin", JSON.stringify(response.data.data.admin));
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      console.error("Error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      setError(error.response?.data?.message || "Login failed. Please check your credentials.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -78,6 +118,13 @@ const SignInPage = () => {
             </button>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
           {/* Remember Me & Forgot Password */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -100,8 +147,9 @@ const SignInPage = () => {
           <Button
             type="submit" // Change to submit to trigger form submission
             className="w-full py-2 bg-[#0E7A60] text-white rounded-md hover:bg-[#0E7A60]"
+            disabled={isLoading}
           >
-            Sign In
+            {isLoading ? "Signing In..." : "Sign In"}
           </Button>
         </form>
       </div>

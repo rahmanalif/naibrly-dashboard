@@ -8,6 +8,8 @@ import SignInPage from "@/pages/auth/SignInPage";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
 import OTPVerification from "@/pages/auth/OTPVerification";
 import ResetPassword from "@/pages/auth/ResetPassword";
+import ProtectedRoute from "./ProtectedRoute";
+import Logout from "@/pages/auth/Logout";
 
 // Dashboard Pages
 import DashboardOverview from "@/pages/dashboardpages/DashboardOverview/DashboardOverview";
@@ -55,33 +57,43 @@ const routes = createBrowserRouter([
   //   element: <ResetPassword />,
   // },
   {
+    path: "/logout",
+    element: <Logout />,
+  },
+  {
     path: "/dashboard",
-    element: <DashboardLayout />,
+    element: <ProtectedRoute />,
     children: [
-      { index: true, element: <DashboardOverview /> },
-      { path: "notifications", element: <AllNotifications /> },
-      { path: "users", element: <AllUsers /> },
-      { path: "users/useraccount", element: <UserAccount /> },
-      { path: "payment", element: <Payment /> },
-      { path: "providers", element: <Providers /> },
-      { path: "providers/provideraccount", element: <ProvidersAccount /> },
-      { path: "providers/providerbilling", element: <ProvidersBilling /> },
-      { path: "categories", element: <Categories /> },
-      { path: "withdraw", element: <Withdraw /> },
-      { path: "quickchat", element: <QuickChat /> },
-      { path: "support", element: <Support /> },
+      {
+        path: "",
+        element: <DashboardLayout />,
+        children: [
+          { index: true, element: <DashboardOverview /> },
+          { path: "notifications", element: <AllNotifications /> },
+          { path: "users", element: <AllUsers /> },
+          { path: "users/useraccount", element: <UserAccount /> },
+          { path: "payment", element: <Payment /> },
+          { path: "providers", element: <Providers /> },
+          { path: "providers/provideraccount", element: <ProvidersAccount /> },
+          { path: "providers/providerbilling", element: <ProvidersBilling /> },
+          { path: "categories", element: <Categories /> },
+          { path: "withdraw", element: <Withdraw /> },
+          { path: "quickchat", element: <QuickChat /> },
+          { path: "support", element: <Support /> },
 
-      // Settings Routes
-      { path: "settings", element: <Setting /> },
-      { path: "settings/profile", element: <Profile /> },
-      { path: "settings/resetPassword", element: <ResetPassword />},
-      { path: "settings/editpersonal", element: <EditProfile /> },
-      { path: "settings/terms", element: <TermsAndConditions /> },
-      { path: "settings/editterms", element: <EditTermsAndConditions /> },
-      { path: "settings/privacy", element: <PrivacyPolicy /> },
-      { path: "settings/editprivacy", element: <EditPrivacyPolicy /> },
-      { path: "settings/faq", element: <Faq /> },
-      { path: "settings/editabout", element: <EditAbout /> },
+          // Settings Routes
+          { path: "settings", element: <Setting /> },
+          { path: "settings/profile", element: <Profile /> },
+          { path: "settings/resetPassword", element: <ResetPassword /> },
+          { path: "settings/editpersonal", element: <EditProfile /> },
+          { path: "settings/terms", element: <TermsAndConditions /> },
+          { path: "settings/editterms", element: <EditTermsAndConditions /> },
+          { path: "settings/privacy", element: <PrivacyPolicy /> },
+          { path: "settings/editprivacy", element: <EditPrivacyPolicy /> },
+          { path: "settings/faq", element: <Faq /> },
+          { path: "settings/editabout", element: <EditAbout /> },
+        ],
+      },
     ],
   },
 ]);

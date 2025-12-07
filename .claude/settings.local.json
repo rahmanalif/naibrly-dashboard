@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -X POST \"https://ungustatory-erringly-ralph.ngrok-free.dev/api/admin/login\" -H \"Content-Type: application/json\" -H \"x-admin-secret: asfgsdgfdhfdhfdhfghfgh\" -H \"ngrok-skip-browser-warning: true\" -d \"{\"\"username\"\":\"\"admin@naibrly.com\"\",\"\"password\"\":\"\"Admin@12345\"\"}\")",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(cat:*)",
+      "Bash(node -e \"console.log(require(''multer-storage-cloudinary''))\")",
+      "Bash(node drop_index.js:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
