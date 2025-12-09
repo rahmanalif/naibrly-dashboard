@@ -1,13 +1,15 @@
-
-
-
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button"; // ShadCN Button
 import { ChevronRight, CircleAlert, MessageSquareMore, ShieldCheck } from "lucide-react"; // For pending action icons
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"; // Recharts for the chart
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import api from "@/lib/api";
 
 // Pending Actions Component
 const PendingActions = () => {
+    const navigate = useNavigate();
+
     const actions = [
         {
             title: "Verification",
@@ -17,7 +19,8 @@ const PendingActions = () => {
             icon: <ShieldCheck className="w-6 h-6" />,
             iconColor: "text-[#0E7A60]",
             iconBg: "bg-[#E8F5F1]",
-            btnbg: "bg-[#0E7A60] hover:bg-[#0A5F4A]"
+            btnbg: "bg-[#0E7A60] hover:bg-[#0A5F4A]",
+            onClick: () => navigate("/dashboard/providers?status=Unverified")
         },
         {
             title: "Support",
@@ -57,7 +60,10 @@ const PendingActions = () => {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button className={`px-6 py-2 rounded-full ${action.btnbg} text-white font-medium`}>
+                            <Button
+                                onClick={action.onClick}
+                                className={`px-6 py-2 rounded-full ${action.btnbg} text-white font-medium`}
+                            >
                                 {action.action}
                             </Button>
                         </div>
@@ -69,30 +75,128 @@ const PendingActions = () => {
 };
 
 // Earnings Summary Component (with Recharts)
-const EarningsSummaryChart = () => {
-    const data = [
-        { month: "May", earnings: 200000 },
-        { month: "Jun", earnings: 180000 },
-        { month: "Jul", earnings: 150000 },
-        { month: "Aug", earnings: 170000 },
-        { month: "Sep", earnings: 190000 },
-        { month: "Oct", earnings: 220000 },
-    ];
+const EarningsSummaryChart = ({ months }) => {
+    const [chartData, setChartData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [summary, setSummary] = useState(null);
+
+    useEffect(() => {
+        const fetchEarnings = async () => {
+            try {
+                setLoading(true);
+                const response = await api.get(`/admin/dashboard/earnings?months=${months}`);
+
+                if (response.data.success) {
+                    const earnings = response.data.data.earnings;
+
+                    // Transform data for the chart
+                    const transformedData = earnings.map(item => ({
+                        month: item.month,
+                        earnings: item.totalRevenue,
+                        serviceRevenue: item.serviceRequestRevenue,
+                        bundleRevenue: item.bundleRevenue,
+                        commission: item.commission
+                    }));
+
+                    setChartData(transformedData);
+                    setSummary(response.data.data.summary);
+                }
+            } catch (err) {
+                console.error('Failed to fetch earnings data:', err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchEarnings();
+    }, [months]);
+
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+        }).format(value);
+    };
+
+    const CustomTooltip = ({ active, payload }) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
+                    <p className="font-semibold text-gray-900 mb-2">{payload[0].payload.month}</p>
+                    <p className="text-sm text-gray-700">
+                        <span className="font-medium">Total Revenue:</span> {formatCurrency(payload[0].payload.earnings)}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                        Service: {formatCurrency(payload[0].payload.serviceRevenue)}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                        Bundle: {formatCurrency(payload[0].payload.bundleRevenue)}
+                    </p>
+                    <p className="text-sm text-green-600 font-medium">
+                        Commission: {formatCurrency(payload[0].payload.commission)}
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
+
+    if (loading) {
+        return (
+            <div className="w-full h-[300px] flex items-center justify-center">
+                <div className="animate-pulse text-gray-500">Loading earnings data...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="w-full h-[300px] flex items-center justify-center">
+                <div className="text-red-500">Failed to load earnings: {error}</div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full h-full">
+            {/* Summary Stats */}
+            {summary && (
+                <div className="grid grid-cols-4 gap-4 mb-6">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-600">Total Revenue</p>
+                        <p className="text-lg font-bold text-gray-900">{formatCurrency(summary.totalRevenue)}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-600">Commission</p>
+                        <p className="text-lg font-bold text-green-600">{formatCurrency(summary.totalCommission)}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-600">Service Revenue</p>
+                        <p className="text-lg font-bold text-blue-600">{formatCurrency(summary.totalServiceRequestRevenue)}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-600">Bundle Revenue</p>
+                        <p className="text-lg font-bold text-purple-600">{formatCurrency(summary.totalBundleRevenue)}</p>
+                    </div>
+                </div>
+            )}
+
             {/* Earnings AreaChart with Dark Green Border and Gradient Fill */}
             <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={data}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#006400" /> {/* Dark Green Border */}
+                <AreaChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                     <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
+                    <YAxis tickFormatter={(value) => `$${value / 1000}k`} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Area
                         type="monotone"
                         dataKey="earnings"
-                        stroke="#006400" // Dark Green Border color
-                        fill="url(#earningsGradient)" // Gradient Fill
+                        stroke="#006400"
+                        fill="url(#earningsGradient)"
+                        strokeWidth={2}
                     />
                 </AreaChart>
             </ResponsiveContainer>
@@ -100,8 +204,8 @@ const EarningsSummaryChart = () => {
             <svg width="0" height="0">
                 <defs>
                     <linearGradient id="earningsGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#82ca9d" />  {/* Green at the top */}
-                        <stop offset="100%" stopColor="#ffffff" />  {/* White at the bottom */}
+                        <stop offset="0%" stopColor="#82ca9d" />
+                        <stop offset="100%" stopColor="#ffffff" />
                     </linearGradient>
                 </defs>
             </svg>
@@ -111,16 +215,35 @@ const EarningsSummaryChart = () => {
 
 // Main Dashboard Component
 const StatsDashboard = () => {
+    const [selectedPeriod, setSelectedPeriod] = useState("6");
+
+    const periodOptions = [
+        { label: "Last 1 month", value: "1" },
+        { label: "Last 3 months", value: "3" },
+        { label: "Last 6 months", value: "6" },
+        { label: "Last 12 months", value: "12" },
+    ];
+
     return (
         <div className="flex gap-3 pt-6">
             {/* Left Section: Earnings Summary Chart (2/3 width) */}
             <div className="w-2/3 bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Earning Summary</h2>
-                <div className="flex justify-between mb-4">
-                    <div className="text-sm text-gray-500">Mar 2022 - Oct 2022</div>
-                    <Button variant="outline" size="sm">Last 6 months</Button>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold">Earning Summary</h2>
+                    <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select period" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {periodOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
-                <EarningsSummaryChart />
+                <EarningsSummaryChart months={parseInt(selectedPeriod)} />
             </div>
 
             {/* Right Section: Pending Actions (1/3 width) */}

@@ -7,37 +7,106 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import api from "@/lib/api";
 
 // Custom Filter Icon SVG Component
 const FilterIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M3 7H21" stroke="#333333" strokeWidth="1.5" strokeLinecap="round"/>
-    <path d="M6 12H18" stroke="#333333" strokeWidth="1.5" strokeLinecap="round"/>
-    <path d="M10 17H14" stroke="#333333" strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M3 7H21" stroke="#333333" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M6 12H18" stroke="#333333" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M10 17H14" stroke="#333333" strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 );
 
 const Providers = () => {
-  // Example user data (add or modify as needed)
-  const users = [
-    { id: 29506, name: "Jacob Maicle", email: "oxheart@email.com", contact: "Unverified", status: "Verified" },
-    { id: 29505, name: "Marvin McKinney", email: "mountain@email.com", contact: "Pending", status: "Verified" },
-    { id: 29504, name: "Kristin Watson", email: "juniper@email.com", contact: "Inactive", status: "Verified" },
-    { id: 29502, name: "Darrell Steward", email: "oxheart@email.com", contact: "Pending", status: "Unverified" },
-    { id: 29501, name: "Theresa Webb", email: "juniper@email.com", contact: "Active", status: "Unverified" },
-    { id: 29501, name: "Theresa Webb", email: "juniper@email.com", contact: "Active", status: "Unverified" },
-    { id: 29501, name: "Theresa Webb", email: "juniper@email.com", contact: "Active", status: "Unverified" },
-    { id: 29501, name: "Theresa Webb", email: "juniper@email.com", contact: "Active", status: "Unverified" },
-    { id: 29500, name: "Eleanor Pena", email: "oxheart@email.com", contact: "Active", status: "Verified" },
-    { id: 29499, name: "Kathryn Murphy", email: "mountain@email.com", contact: "Verified", status: "Verified" }
-  ];
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const navigate = useNavigate()
+  // State Management
+  const [providers, setProviders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    total: 0,
+    pages: 0
+  });
 
-  const handleClick = ()=>{
-    navigate("/dashboard/providers/provideraccount")
+  // Filter State from URL
+  const [filterStatus, setFilterStatus] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("status") || "All";
+  });
+
+  // Sync Filter State with URL changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const statusParam = params.get("status") || "All";
+    if (statusParam !== filterStatus) {
+      setFilterStatus(statusParam);
+      setCurrentPage(1); // Reset to first page when filter changes
+    }
+  }, [location.search, filterStatus]);
+
+  // Fetch Providers from API
+  useEffect(() => {
+    const fetchProviders = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const params = {
+          page: currentPage,
+          limit: rowsPerPage,
+          search: searchQuery
+        };
+
+        // Map filter status to API parameter
+        // Assuming API might accept 'verified' boolean or handle it differently.
+        // Based on user request "verified means show all verified provider", we send a param.
+        if (filterStatus === "Verified") {
+          params.isVerified = true;
+        } else if (filterStatus === "Unverified") {
+          params.isVerified = false;
+        }
+
+        console.log('Fetching providers with params:', params);
+        const response = await api.get('/admin/providers', { params });
+
+        if (response.data.success) {
+          setProviders(response.data.data.providers);
+          setPagination(response.data.data.pagination);
+        } else {
+          // Fallback if success is false but no error thrown
+          setError("Failed to fetch data");
+        }
+      } catch (err) {
+        console.error('Failed to fetch providers:', err);
+        setError(err.message || "An error occurred while fetching providers");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Debounce only for search query changes, fetch immediately for other changes
+    const timeoutId = setTimeout(() => {
+      fetchProviders();
+    }, searchQuery ? 500 : 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, rowsPerPage, searchQuery, filterStatus]);
+
+
+  const handleClick = (providerId) => {
+    // Navigate to provider details/account page
+    // Using query param or path param based on existing pattern, user mentioned "providers/provideraccount"
+    // Ideally should be `/dashboard/providers/provideraccount?id=${providerId}` or similar.
+    navigate(`/dashboard/providers/provideraccount?id=${providerId}`);
   }
 
   const handleExport = () => {
@@ -46,54 +115,67 @@ const Providers = () => {
   }
 
   const handleFilter = (filterType) => {
-    console.log("Filtering by:", filterType);
-    // Add filter logic here
+    navigate(`?status=${filterType}`, { replace: true });
   }
 
-  // Pagination State
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-
   const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
+    if (newPage >= 1 && newPage <= pagination.pages) {
+      setCurrentPage(newPage);
+    }
   };
 
   const renderTableRows = () => {
-    const indexOfLastUser = currentPage * rowsPerPage;
-    const indexOfFirstUser = indexOfLastUser - rowsPerPage;
-    const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+    if (loading) {
+      return (
+        <tr>
+          <td colSpan="6" className="px-6 py-12 text-center">
+            <div className="flex justify-center items-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <span className="ml-3 text-gray-600">Loading providers...</span>
+            </div>
+          </td>
+        </tr>
+      )
+    }
 
-    return currentUsers.map((user) => (
-      <tr key={user.id} className="border-b hover:bg-[#0E7A601A]">
-        <td className="px-6 py-4">{user.id}</td>
-        <td className="px-6 py-4">{user.name}</td>
-        <td className="px-6 py-4">{user.email}</td>
+    if (error) {
+      return (
+        <tr>
+          <td colSpan="6" className="px-6 py-12 text-center text-red-500">
+            Error: {error}
+          </td>
+        </tr>
+      )
+    }
+
+    if (providers.length === 0) {
+      return (
+        <tr>
+          <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+            No providers found.
+          </td>
+        </tr>
+      )
+    }
+
+    return providers.map((provider) => (
+      <tr key={provider._id} className="border-b hover:bg-[#0E7A601A]">
+        <td className="px-6 py-4">{provider._id.slice(-6).toUpperCase()}</td>
+        <td className="px-6 py-4">{provider.firstName} {provider.lastName}</td>
+        <td className="px-6 py-4">{provider.email}</td>
         <td className="px-6 py-4">
-          {/* Fixing Badge color for 'Contact' */}
+          {/* Displaying Phone as Contact */}
+          {provider.phone || "N/A"}
+        </td>
+        <td className="px-6 py-4">
           <Badge
-            className=
-            // user.contact === "Verified" ? "bg-green-500 text-white" : 
-            // user.contact === "Unverified" ? "bg-red-500 text-white" :
-            // user.contact === "Pending" ? "bg-yellow-500 text-white" : 
-            " text-black bg-transparent"
-
+            className={`${provider.isVerified ? "bg-[#E4F6E8] text-[#3EBF5A]" : "bg-[#FDDEDE] text-[#F34F4F]"}`}
           >
-            {user.contact}
+            {provider.isVerified ? "Verified" : "Unverified"}
           </Badge>
         </td>
         <td className="px-6 py-4">
-          {/* Fixing Badge color for 'Status' */}
-          <Badge
-            className={`${user.status === "Verified" ? "bg-[#E4F6E8] text-[#3EBF5A]" :
-                user.status === "Unverified" ? "bg-[#FDDEDE] text-[#F34F4F]" :
-                  "bg-gray-500 text-white"
-              }`}
-          >
-            {user.status}
-          </Badge>
-        </td>
-        <td className="px-6 py-4">
-          <Button onClick={handleClick} variant="outline" size="sm" className="border-0 bg-transparent shadow-none">
+          <Button onClick={() => handleClick(provider._id)} variant="outline" size="sm" className="border-0 bg-transparent shadow-none">
             <Eye />
           </Button>
         </td>
@@ -109,6 +191,9 @@ const Providers = () => {
           <input
             type="text"
             placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="outline-none"
           />
         </div>
         <div className="flex items-center gap-3">
@@ -123,6 +208,9 @@ const Providers = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => handleFilter("All")}>
+                All
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleFilter("Verified")}>
                 Verified
               </DropdownMenuItem>
@@ -164,18 +252,30 @@ const Providers = () => {
       <div className="flex justify-end items-center mt-4 text-sm text-gray-500 gap-5">
         <div className="flex items-center gap-2">
           Rows per page:
-          <select className="border rounded-md px-2 py-1">
-            <option>10</option>
-            <option>25</option>
-            <option>50</option>
+          <select
+            className="border rounded-md px-2 py-1"
+            value={rowsPerPage}
+            onChange={(e) => setRowsPerPage(Number(e.target.value))}
+          >
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
           </select>
         </div>
         <div className="flex flex-row items-center gap-3">
-          <p>Page 1 of 7</p>
-          <button className="btn border p-1 rounded-sm cursor-pointer">
+          <p>Page {pagination.current} of {pagination.pages || 1}</p>
+          <button
+            className="btn border p-1 rounded-sm cursor-pointer disabled:opacity-50"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
             <ChevronLeft />
           </button>
-          <button className="btn border p-1 rounded-sm cursor-pointer">
+          <button
+            className="btn border p-1 rounded-sm cursor-pointer disabled:opacity-50"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage >= pagination.pages}
+          >
             <ChevronRight />
           </button>
         </div>

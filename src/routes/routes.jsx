@@ -34,23 +34,28 @@ import ProvidersAccount from "@/pages/dashboardpages/providers/ProvidersAccount"
 import ProvidersBilling from "@/pages/dashboardpages/providers/ProvidersBilling";
 import UserAccount from "@/pages/dashboardpages/user/UserAccount";
 import QuickChat from "@/pages/dashboardpages/quickchat/QuickChat";
+import ErrorPage from "@/pages/error/ErrorPage";
 
 const routes = createBrowserRouter([
   {
     path: "/",
     element: <SignInPage />,
+    errorElement: <ErrorPage />,
   },
   {
     path: "/signin",
     element: <SignInPage />,
+    errorElement: <ErrorPage />,
   },
   {
     path: "/forgotpass",
     element: <ForgotPassword />,
+    errorElement: <ErrorPage />,
   },
   {
     path: "/otpverification",
     element: <OTPVerification />,
+    errorElement: <ErrorPage />,
   },
   // {
   //   path: "/resetPassword",
@@ -59,10 +64,12 @@ const routes = createBrowserRouter([
   {
     path: "/logout",
     element: <Logout />,
+    errorElement: <ErrorPage />,
   },
   {
     path: "/dashboard",
     element: <ProtectedRoute />,
+    errorElement: <ErrorPage />,
     children: [
       {
         path: "",

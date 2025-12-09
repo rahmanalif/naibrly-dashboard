@@ -13,7 +13,7 @@ const ProvidersBilling = () => {
             <div className='flex-3/4'>
                 <div className='flex flex-row gap-3 mb-4'>
                     <Link to="/dashboard/providers/provideraccount" className="btn p-3 text-sm font-semibold">Account</Link>
-                    <Link to="/dashboard/providers/providerbilling" className="btn p-3 font-semibold text-sm bg-[#0E7A601A]/90 rounded-lg border border-[#0E7A60]">Billing</Link>
+                    <Link to="/dashboard/providers/providerbilling" className="btn p-3 font-semibold text-sm bg-[#0E7A601A]/90 rounded-lg border border-[#0E7A60]">Information</Link>
                 </div>
                 <ActivityTimeline></ActivityTimeline>
             </div>

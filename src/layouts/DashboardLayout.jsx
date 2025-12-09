@@ -2,6 +2,7 @@
 import DashboardHeader from "../components/dashboardcomponents/DashboardHeader";
 import DashboardSidebar from "../components/dashboardcomponents/DashboardSidebar";
 import { Outlet } from "react-router-dom"; // Import Outlet
+import { Toaster } from "sonner";
 
 export default function DashboardLayout() {
   return (
@@ -19,6 +20,7 @@ export default function DashboardLayout() {
           <Outlet /> {/* Replace {children} with Outlet */}
         </main>
       </div>
+      <Toaster />
     </div>
   );
 }

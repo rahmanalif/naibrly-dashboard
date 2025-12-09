@@ -14,7 +14,7 @@ const ProviderBillingCard = () => {
                 <button className="btn">Billing</button>
             </div> */}
             <div>
-                <h2 className="text-lg font-semibold mb-2">Billing Address</h2>
+                <h2 className="text-lg font-semibold mb-2">Provider Information</h2>
 
                 <div className="grid grid-cols-2 gap-y-2 text-sm text-gray-700 border-b pb-2">
                     <p><strong>Business Name:</strong> Jacob Maicle</p>

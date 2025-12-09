@@ -63,7 +63,20 @@ const SignInPage = () => {
         response: error.response?.data,
         status: error.response?.status,
       });
-      setError(error.response?.data?.message || "Login failed. Please check your credentials.");
+      let errorMessage = "Login failed. Please check your credentials.";
+      const responseData = error.response?.data;
+
+      if (typeof responseData === 'string') {
+        if (responseData.includes('ngrok')) {
+          errorMessage = "Backend server is unreachable via Ngrok. Please ensure the server is running on port 5000.";
+        } else {
+          errorMessage = "Server error. Please try again later.";
+        }
+      } else if (responseData?.message) {
+        errorMessage = responseData.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
