@@ -10,12 +10,90 @@ import leftBg from "@/assets/resetpassbgleft.png";
 import rightBg from "@/assets/resetpassright.png";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineKeyboardArrowLeft } from "react-icons/md";
+import { changeAdminPassword, validatePassword } from "../../services/settingsService";
+import { toast } from "sonner";
 
 const ResetPassword = () => {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate()
+  const [formData, setFormData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const navigate = useNavigate();
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      // Validation
+      if (!formData.currentPassword) {
+        toast.error('Current password is required');
+        return;
+      }
+
+      if (!formData.newPassword) {
+        toast.error('New password is required');
+        return;
+      }
+
+      const passwordValidation = validatePassword(formData.newPassword);
+      if (!passwordValidation.isValid) {
+        toast.error(passwordValidation.message);
+        return;
+      }
+
+      if (!formData.confirmPassword) {
+        toast.error('Please confirm your new password');
+        return;
+      }
+
+      if (formData.newPassword !== formData.confirmPassword) {
+        toast.error('New password and confirm password do not match');
+        return;
+      }
+
+      if (formData.currentPassword === formData.newPassword) {
+        toast.error('New password must be different from current password');
+        return;
+      }
+
+      setLoading(true);
+
+      const response = await changeAdminPassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      });
+
+      if (response.success) {
+        toast.success('Password changed successfully!');
+        // Clear form
+        setFormData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+        // Navigate back after a short delay
+        setTimeout(() => navigate('/dashboard/settings'), 1500);
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      toast.error(error?.message || 'Failed to change password');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div>
@@ -40,7 +118,7 @@ const ResetPassword = () => {
             Change Password
           </h2>
 
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Current Password */}
             <div>
               <Label htmlFor="currentPassword">Current Password</Label>
@@ -49,6 +127,8 @@ const ResetPassword = () => {
                 type="password"
                 placeholder="********"
                 className="mt-1"
+                value={formData.currentPassword}
+                onChange={(e) => handleInputChange("currentPassword", e.target.value)}
               />
             </div>
 
@@ -61,6 +141,8 @@ const ResetPassword = () => {
                 type={showNew ? "text" : "password"}
                 placeholder="********"
                 className="mt-1 pr-10"
+                value={formData.newPassword}
+                onChange={(e) => handleInputChange("newPassword", e.target.value)}
               />
               <button
                 type="button"
@@ -81,6 +163,8 @@ const ResetPassword = () => {
                 type={showConfirm ? "text" : "password"}
                 placeholder="********"
                 className="mt-1 pr-10"
+                value={formData.confirmPassword}
+                onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
               />
               <button
                 type="button"
@@ -95,9 +179,10 @@ const ResetPassword = () => {
             {/* Confirm Button */}
             <Button
               type="submit"
-              className="w-full mt-6 bg-[#0E7A60] hover:bg-[#0E7A60] text-white"
+              disabled={loading}
+              className="w-full mt-6 bg-[#0E7A60] hover:bg-[#0E7A60] text-white disabled:opacity-50"
             >
-              Confirm
+              {loading ? 'Changing Password...' : 'Confirm'}
             </Button>
           </form>
         </div>

@@ -9,7 +9,7 @@ const DashboardOverview = () => {
   return (
     <div>
       <DashboardHeader />
-      <StatsSection />
+      <StatsSection showBalance={true} />
       <StatsDashboard></StatsDashboard>
       {/* <PaymentHistory></PaymentHistory> */}
       <DashPayment></DashPayment>

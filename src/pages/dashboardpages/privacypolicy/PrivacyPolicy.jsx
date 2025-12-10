@@ -2,22 +2,35 @@ import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
 import { MdOutlineKeyboardArrowLeft } from "react-icons/md";
 import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { getPrivacyPolicy, formatLastUpdated } from "../../../services/settingsService";
+import { toast } from "sonner";
 
 const PrivacyPolicy = () => {
-  const policyParagraphs = [
-    { quote:"1.Introduction",
-      text:"Lorem ipsum dolor sit amet consectetur. Fringilla a cras vitae orci. Egestas duis id nisl sed ante congue scelerisque. Eleifend facilisis aliquet tempus morbi leo sagittis. Pellentesque odio amet turpis habitant. Imperdiet tincidunt nisl consectetur hendrerit accumsan vehicula imperdiet mattis. Neque a vitae diam pharetra duis habitasse convallis luctus pulvinar. Pharetra nunc morbi elementum nisl magna convallis arcu enim tortor. Cursus a sed tortor enim mi imperdiet massa donec mauris. Sem morbi morbi posuere faucibus. Cras risus ultrices duis pharetra sit porttitor elementum sagittis elementum. Ut vitae blandit pulvinar fermentum in id sed. At pellentesque non semper eget egestas vulputate id volutpat quis. Dolor etiam sodales at elementum mattis nibh quam placerat ut. Suspendisse est adipiscing proin et. Leo nisl bibendum donec ac non eget euismod suscipit. At ultrices nullam ipsum tellus. Non dictum orci at tortor convallis tortor suspendisse. Ac duis senectus arcu nullam in suspendisse vitae. Tellus interdum enim lorem vel morbi lectus."},
-    {quote:"2. Eligibility",
-      text:"Lorem ipsum dolor sit amet consectetur. Fringilla a cras vitae orci. Egestas duis id nisl sed ante congue scelerisque. Eleifend facilisis aliquet tempus morbi leo sagittis. Pellentesque odio amet turpis habitant. Imperdiet tincidunt nisl consectetur hendrerit accumsan vehicula imperdiet mattis. Neque a vitae diam pharetra duis habitasse convallis luctus pulvinar. Pharetra nunc morbi elementum nisl magna convallis arcu enim tortor. Cursus a sed tortor enim mi imperdiet massa donec mauris. Sem morbi morbi posuere faucibus. Cras risus ultrices duis pharetra sit porttitor elementum sagittis elementum. Ut vitae blandit pulvinar fermentum in id sed. At pellentesque non semper eget egestas vulputate id volutpat quis. Dolor etiam sodales at elementum mattis nibh quam placerat ut. Suspendisse est adipiscing proin et. Leo nisl bibendum donec ac non eget euismod suscipit. At ultrices nullam ipsum tellus. Non dictum orci at tortor convallis tortor suspendisse. Ac duis senectus arcu nullam in suspendisse vitae. Tellus interdum enim lorem vel morbi lectus."},
-    {quote:"3. User Responsibility",
-      text:"Lorem ipsum dolor sit amet consectetur. Fringilla a cras vitae orci. Egestas duis id nisl sed ante congue scelerisque. Eleifend facilisis aliquet tempus morbi leo sagittis. Pellentesque odio amet turpis habitant. Imperdiet tincidunt nisl consectetur hendrerit accumsan vehicula imperdiet mattis. Neque a vitae diam pharetra duis habitasse convallis luctus pulvinar. Pharetra nunc morbi elementum nisl magna convallis arcu enim tortor. Cursus a sed tortor enim mi imperdiet massa donec mauris. Sem morbi morbi posuere faucibus. Cras risus ultrices duis pharetra sit porttitor elementum sagittis elementum. Ut vitae blandit pulvinar fermentum in id sed. At pellentesque non semper eget egestas vulputate id volutpat quis. Dolor etiam sodales at elementum mattis nibh quam placerat ut. Suspendisse est adipiscing proin et. Leo nisl bibendum donec ac non eget euismod suscipit. At ultrices nullam ipsum tellus. Non dictum orci at tortor convallis tortor suspendisse. Ac duis senectus arcu nullam in suspendisse vitae. Tellus interdum enim lorem vel morbi lectus."},
-      {
-        quote:"4. Prohibited Activities",
-        text:"Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident."
-      }
-  ];
-
   const navigate = useNavigate();
+  const [content, setContent] = useState("");
+  const [lastUpdated, setLastUpdated] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPrivacyPolicy();
+  }, []);
+
+  const fetchPrivacyPolicy = async () => {
+    try {
+      setLoading(true);
+      const response = await getPrivacyPolicy();
+      if (response.success) {
+        setContent(response.data.content || "");
+        setLastUpdated(response.data.lastUpdated || "");
+      }
+    } catch (error) {
+      console.error('Error fetching privacy policy:', error);
+      toast.error(error?.message || 'Failed to load privacy policy');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="font-sans pr-5">
@@ -68,17 +81,19 @@ const PrivacyPolicy = () => {
 
       {/* Content */}
       <div className="space-y-6 p-6 bg-[#FFFFFF] rounded-lg mt-4">
-        <h3 className="text-[18px] text-[#0E7A60] font-semibold">Last Updated: October 2025</h3>
-        {policyParagraphs.map((paragraph, index) => (
-          <div key={index}>
-          <p  className="text-gray-700 leading-relaxed text-justify">
-            {paragraph.quote}
-          </p>
-          <p>
-            {paragraph.text}
-          </p>
-          </div>
-        ))}
+        {loading ? (
+          <div className="text-center text-gray-600 py-8">Loading...</div>
+        ) : (
+          <>
+            <h3 className="text-[18px] text-[#0E7A60] font-semibold">
+              {lastUpdated ? formatLastUpdated(lastUpdated) : 'Last Updated: N/A'}
+            </h3>
+            <div
+              className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: content }}
+            />
+          </>
+        )}
       </div>
     </div>
   );

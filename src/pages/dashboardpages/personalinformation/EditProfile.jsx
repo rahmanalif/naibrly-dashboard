@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,19 +7,46 @@ import { Upload } from "lucide-react";
 import flag from "../../../assets/flag.png";
 import { Link, useNavigate } from "react-router-dom";
 import { MdOutlineKeyboardArrowLeft } from "react-icons/md";
+import { getAdminProfile, updateAdminProfile, validateEmail } from "../../../services/settingsService";
+import { toast } from "sonner";
 
 const EditProfile = () => {
 
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: "Isabela",
-    email: "Isabela@gmail.com",
-    phone: "1234567890",
+    name: "",
+    email: "",
+    phone: "",
   });
 
-  const [profileImage, setProfileImage] = useState(
-    "https://images.app.goo.gl/mrJyRYZVPjsik1j19"
-  );
+  const [profileImage, setProfileImage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await getAdminProfile();
+      if (response.success) {
+        const profile = response.data;
+        setFormData({
+          name: profile.name || "",
+          email: profile.email || "",
+          phone: profile.phone?.replace('+880', '') || "",
+        });
+        setProfileImage(profile.avatar || "");
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      toast.error(error?.message || 'Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -28,10 +55,54 @@ const EditProfile = () => {
     }));
   };
 
-  const handleSaveChanges = () => {
-    // Handle save logic here
-    console.log("Saving changes:", formData);
-    alert("Changes saved successfully!");
+  const handleSaveChanges = async () => {
+    try {
+      // Validation
+      if (!formData.name.trim()) {
+        toast.error('Name is required');
+        return;
+      }
+
+      if (!formData.email.trim()) {
+        toast.error('Email is required');
+        return;
+      }
+
+      if (!validateEmail(formData.email)) {
+        toast.error('Please enter a valid email address');
+        return;
+      }
+
+      if (!formData.phone.trim()) {
+        toast.error('Phone number is required');
+        return;
+      }
+
+      setSaving(true);
+
+      const updateData = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: `+880${formData.phone}`,
+        avatar: profileImage,
+      };
+
+      const response = await updateAdminProfile(updateData);
+
+      if (response.success) {
+        toast.success('Profile updated successfully!');
+        // Update localStorage admin data if it exists
+        const adminData = JSON.parse(localStorage.getItem('admin') || '{}');
+        localStorage.setItem('admin', JSON.stringify({ ...adminData, ...response.data }));
+        // Navigate back to profile page
+        setTimeout(() => navigate('/dashboard/settings/profile'), 1000);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error(error?.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleImageUpload = (event) => {
@@ -44,6 +115,14 @@ const EditProfile = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen font-sans bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading profile...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen font-sans bg-gray-50">
@@ -67,9 +146,10 @@ const EditProfile = () => {
 
         <Button
           onClick={handleSaveChanges}
-          className=" bg-[#0E7A60] hover:bg-[#0E7A60] text-white"
+          disabled={saving}
+          className=" bg-[#0E7A60] hover:bg-[#0E7A60] text-white disabled:opacity-50"
         >
-          Save Changes
+          {saving ? 'Saving...' : 'Save Changes'}
         </Button>
 
       </div>
@@ -86,7 +166,7 @@ const EditProfile = () => {
                   src={profileImage || "/placeholder.svg"}
                   alt="Profile"
                 />
-                <AvatarFallback>IS</AvatarFallback>
+                <AvatarFallback>{formData.name?.substring(0, 2).toUpperCase() || "AD"}</AvatarFallback>
               </Avatar>
               <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
                 <label htmlFor="profile-upload" className="cursor-pointer">

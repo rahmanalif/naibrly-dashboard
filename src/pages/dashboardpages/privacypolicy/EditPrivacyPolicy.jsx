@@ -1,7 +1,4 @@
-
-
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -27,16 +24,56 @@ import {
 } from "lucide-react";
 import { MdOutlineKeyboardArrowLeft } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
+import { getPrivacyPolicy, updatePrivacyPolicy } from "../../../services/settingsService";
+import { toast } from "sonner";
 
-const EditTermsAndConditions = () => {
-  const [content, setContent] = useState(
-    `Lorem ipsum dolor sit amet consectetur. Fringilla a cras vitae orci...`
-  );
+const EditPrivacyPolicy = () => {
+  const [content, setContent] = useState("");
   const [fontSize, setFontSize] = useState("16");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleSaveChanges = () => {
-    console.log("Saving Terms and Conditions:", content);
-    alert("Terms and Conditions saved successfully!");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchPrivacyPolicy();
+  }, []);
+
+  const fetchPrivacyPolicy = async () => {
+    try {
+      setLoading(true);
+      const response = await getPrivacyPolicy();
+      if (response.success) {
+        setContent(response.data.content || "");
+      }
+    } catch (error) {
+      console.error('Error fetching privacy policy:', error);
+      toast.error(error?.message || 'Failed to load privacy policy');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      if (!content.trim()) {
+        toast.error('Content cannot be empty');
+        return;
+      }
+
+      setSaving(true);
+      const response = await updatePrivacyPolicy(content);
+
+      if (response.success) {
+        toast.success('Privacy Policy updated successfully!');
+        setTimeout(() => navigate('/dashboard/settings/privacy'), 1000);
+      }
+    } catch (error) {
+      console.error('Error updating privacy policy:', error);
+      toast.error(error?.message || 'Failed to update privacy policy');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const insertText = (before, after = "") => {
@@ -101,7 +138,13 @@ const EditTermsAndConditions = () => {
     },
   ];
 
-  const navigate = useNavigate()
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="">
@@ -119,9 +162,10 @@ const EditTermsAndConditions = () => {
         <div className="">
           <Button
             onClick={handleSaveChanges}
-            className="bg-[#0E7A60] hover:bg-[#0E7A60] text-white px-8 py-2 rounded-md"
+            disabled={saving}
+            className="bg-[#0E7A60] hover:bg-[#0E7A60] text-white px-8 py-2 rounded-md disabled:opacity-50"
           >
-            Update
+            {saving ? 'Updating...' : 'Update'}
           </Button>
         </div>
 
@@ -137,7 +181,7 @@ const EditTermsAndConditions = () => {
                 {/* Font Size Selector */}
                 <Select value={fontSize} onValueChange={setFontSize}>
                   <SelectTrigger className="w-16 h-8 text-sm text-[#0E7A60]">
-                    <SelectValue className="text-[#0E7A60]" />
+                    <SelectValue className="text-[#0E7A60]"/>
                   </SelectTrigger>
                   <SelectContent>
                     {["12", "14", "16", "18", "20", "24"].map((size) => (
@@ -219,16 +263,6 @@ const EditTermsAndConditions = () => {
                 style={{ fontSize: `${fontSize}px` }}
               />
             </div>
-
-            {/* Save Button */}
-            {/* <div className="p-4 border-t border-gray-200">
-              <Button
-                onClick={handleSaveChanges}
-                className="bg-[#017783] hover:bg-[#015a63] text-white px-8 py-2 rounded-md"
-              >
-                Save Changes
-              </Button>
-            </div> */}
           </div>
         </div>
       </div>
@@ -236,4 +270,4 @@ const EditTermsAndConditions = () => {
   );
 };
 
-export default EditTermsAndConditions;
+export default EditPrivacyPolicy;

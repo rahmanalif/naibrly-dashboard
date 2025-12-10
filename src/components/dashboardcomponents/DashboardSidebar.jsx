@@ -1,18 +1,10 @@
 "use client";
 import {
-  LayoutDashboard,
-  CreditCard,
-  Users2,
-  Store,
-  Grid3x3,
-  Banknote,
   HelpCircle,
-  Settings,
   LogOut,
   Menu,
   ChevronRight,
   ChevronDown,
-  MessageCircleMore,
   UserCog,
   ScrollText,
   FileText,
@@ -24,23 +16,32 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import logo from "../../assets/logo.svg";
+import { DashboardIcon } from "@/components/icons/DashboardIcon";
+import { PaymentIcon } from "@/components/icons/PaymentIcon";
+import { UserIcon } from "@/components/icons/UserIcon";
+import { ProvidersIcon } from "@/components/icons/ProvidersIcon";
+import { CategoryIcon } from "@/components/icons/CategoryIcon";
+import { WithdrawIcon } from "@/components/icons/WithdrawIcon";
+import { QuickchatIcon } from "@/components/icons/QuickchatIcon";
+import { SupportIcon } from "@/components/icons/SupportIcon";
+import { SettingIcon } from "@/components/icons/SettingIcon";
 
 const mainMenuItems = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Payment", href: "/dashboard/payment", icon: CreditCard },
-  { title: "User", href: "/dashboard/users", icon: Users2 },
-  { title: "Providers", href: "/dashboard/providers", icon: Store },
-  { title: "Categories", href: "/dashboard/categories", icon: Grid3x3 },
-  { title: "Withdraw", href: "/dashboard/withdraw", icon: Banknote },
-  { title: "Quickchat", href: "/dashboard/quickchat", icon: MessageCircleMore },
+  { title: "Dashboard", href: "/dashboard", icon: DashboardIcon },
+  { title: "Payment", href: "/dashboard/payment", icon: PaymentIcon },
+  { title: "User", href: "/dashboard/users", icon: UserIcon },
+  { title: "Providers", href: "/dashboard/providers", icon: ProvidersIcon },
+  { title: "Categories", href: "/dashboard/categories", icon: CategoryIcon },
+  { title: "Withdraw", href: "/dashboard/withdraw", icon: WithdrawIcon },
+  { title: "Quickchat", href: "/dashboard/quickchat", icon: QuickchatIcon },
 ];
 
 const otherMenuItems = [
-  { title: "Support", href: "/dashboard/support", icon: HelpCircle },
+  { title: "Support", href: "/dashboard/support", icon: SupportIcon },
   {
     title: "Setting",
     href: "/dashboard/settings",
-    icon: Settings,
+    icon: SettingIcon,
     // children: [
     //   { title: "Profile", href: "/dashboard/settings/profile", icon: UserCog },
     //   {

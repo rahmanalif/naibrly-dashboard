@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -24,16 +24,56 @@ import {
 } from "lucide-react";
 import { MdOutlineKeyboardArrowLeft } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
+import { getTermsAndConditions, updateTermsAndConditions } from "../../../services/settingsService";
+import { toast } from "sonner";
 
 const EditTermsAndConditions = () => {
-  const [content, setContent] = useState(
-    `Lorem ipsum dolor sit amet consectetur. Fringilla a cras vitae orci...`
-  );
+  const [content, setContent] = useState("");
   const [fontSize, setFontSize] = useState("16");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleSaveChanges = () => {
-    console.log("Saving Terms and Conditions:", content);
-    alert("Terms and Conditions saved successfully!");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchTerms();
+  }, []);
+
+  const fetchTerms = async () => {
+    try {
+      setLoading(true);
+      const response = await getTermsAndConditions();
+      if (response.success) {
+        setContent(response.data.content || "");
+      }
+    } catch (error) {
+      console.error('Error fetching terms:', error);
+      toast.error(error?.message || 'Failed to load terms and conditions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      if (!content.trim()) {
+        toast.error('Content cannot be empty');
+        return;
+      }
+
+      setSaving(true);
+      const response = await updateTermsAndConditions(content);
+
+      if (response.success) {
+        toast.success('Terms and Conditions updated successfully!');
+        setTimeout(() => navigate('/dashboard/settings/terms'), 1000);
+      }
+    } catch (error) {
+      console.error('Error updating terms:', error);
+      toast.error(error?.message || 'Failed to update terms and conditions');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const insertText = (before, after = "") => {
@@ -98,7 +138,13 @@ const EditTermsAndConditions = () => {
     },
   ];
 
-  const navigate = useNavigate()
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="">
@@ -116,9 +162,10 @@ const EditTermsAndConditions = () => {
         <div className="">
           <Button
             onClick={handleSaveChanges}
-            className="bg-[#0E7A60] hover:bg-[#0E7A60] text-white px-8 py-2 rounded-md"
+            disabled={saving}
+            className="bg-[#0E7A60] hover:bg-[#0E7A60] text-white px-8 py-2 rounded-md disabled:opacity-50"
           >
-            Update
+            {saving ? 'Updating...' : 'Update'}
           </Button>
         </div>
 

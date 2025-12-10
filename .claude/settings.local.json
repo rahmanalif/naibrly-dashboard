@@ -9,7 +9,8 @@
       "Bash(node drop_index.js:*)",
       "Bash(dir:*)",
       "Bash(find:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []
