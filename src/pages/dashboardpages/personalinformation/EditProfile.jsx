@@ -32,13 +32,13 @@ const EditProfile = () => {
       setLoading(true);
       const response = await getAdminProfile();
       if (response.success) {
-        const profile = response.data;
+        const profile = response.data.admin;
         setFormData({
-          name: profile.name || "",
+          name: `${profile.firstName || ""} ${profile.lastName || ""}`.trim(),
           email: profile.email || "",
           phone: profile.phone?.replace('+880', '') || "",
         });
-        setProfileImage(profile.avatar || "");
+        setProfileImage(profile.profileImage?.url || "");
       }
     } catch (error) {
       console.error('Error fetching profile:', error);

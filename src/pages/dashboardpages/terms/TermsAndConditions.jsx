@@ -22,8 +22,8 @@ const TermsAndConditions = () => {
       setLoading(true);
       const response = await getTermsAndConditions();
       if (response.success) {
-        setContent(response.data.content || "");
-        setLastUpdated(response.data.lastUpdated || "");
+        setContent(response.data.content?.content || "");
+        setLastUpdated(response.data.content?.updatedAt || "");
       }
     } catch (error) {
       console.error('Error fetching terms:', error);

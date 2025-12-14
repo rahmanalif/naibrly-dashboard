@@ -10,7 +10,10 @@
       "Bash(dir:*)",
       "Bash(find:*)",
       "Bash(echo:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTIwYWZjN2JiYmQ2YWZlNjhhMmU3YzQiLCJpYXQiOjE3NjUzODczODQsImV4cCI6MTc2NTQ3Mzc4NH0.4rJ3Y9cIZyqRzRUab8BSS06Q_fJP8-Sm6X-ZzDQ2k9o\")",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

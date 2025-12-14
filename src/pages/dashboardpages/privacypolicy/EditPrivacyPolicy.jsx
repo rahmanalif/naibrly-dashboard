@@ -44,7 +44,7 @@ const EditPrivacyPolicy = () => {
       setLoading(true);
       const response = await getPrivacyPolicy();
       if (response.success) {
-        setContent(response.data.content || "");
+        setContent(response.data.content?.content || "");
       }
     } catch (error) {
       console.error('Error fetching privacy policy:', error);

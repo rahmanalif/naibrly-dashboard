@@ -44,7 +44,7 @@ const EditTermsAndConditions = () => {
       setLoading(true);
       const response = await getTermsAndConditions();
       if (response.success) {
-        setContent(response.data.content || "");
+        setContent(response.data.content?.content || "");
       }
     } catch (error) {
       console.error('Error fetching terms:', error);

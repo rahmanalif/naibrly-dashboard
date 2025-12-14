@@ -1,19 +1,45 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button"; // ShadCN Button
-import { ChevronRight, CircleAlert, MessageSquareMore, ShieldCheck } from "lucide-react"; // For pending action icons
+import { ChevronRight, MessageSquareMore, ShieldCheck } from "lucide-react"; // For pending action icons
+import { WithdrawIcon } from "@/components/icons/WithdrawIcon"; // Custom withdraw icon
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"; // Recharts for the chart
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import api from "@/lib/api";
+import { getDashboardStats } from "@/services/paymentService";
 
 // Pending Actions Component
 const PendingActions = () => {
     const navigate = useNavigate();
+    const [pendingData, setPendingData] = useState({
+        pendingVerifications: 0,
+        newSupportTickets: 0,
+        pendingWithdrawals: 0
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchPendingActions = async () => {
+            try {
+                setLoading(true);
+                const response = await getDashboardStats();
+                if (response.success && response.data.pendingActions) {
+                    setPendingData(response.data.pendingActions);
+                }
+            } catch (error) {
+                console.error('Failed to fetch pending actions:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPendingActions();
+    }, []);
 
     const actions = [
         {
             title: "Verification",
-            count: "12 Providers awaiting verification",
+            count: loading ? "Loading..." : `${pendingData.pendingVerifications} Providers awaiting verification`,
             color: "bg-[#D4F4E7]",
             action: "Review",
             icon: <ShieldCheck className="w-6 h-6" />,
@@ -24,23 +50,25 @@ const PendingActions = () => {
         },
         {
             title: "Support",
-            count: "8 New Chat",
+            count: loading ? "Loading..." : `${pendingData.newSupportTickets} New Chat`,
             color: "bg-[#FCE8D9]",
             action: "Respond",
             icon: <MessageSquareMore className="w-6 h-6" />,
             iconColor: "text-[#F3934F]",
             iconBg: "bg-white",
-            btnbg: "bg-[#F3934F] hover:bg-[#E07A35]"
+            btnbg: "bg-[#F3934F] hover:bg-[#E07A35]",
+            onClick: () => navigate("/dashboard/support")
         },
         {
-            title: "Reports",
-            count: "5 new report",
-            color: "bg-[#FDDEDE]",
-            action: "Investigate",
-            icon: <CircleAlert className="w-6 h-6" />,
-            iconColor: "text-[#F34F4F]",
+            title: "Withdraw Requests",
+            count: loading ? "Loading..." : `${pendingData.pendingWithdrawals} new requests`,
+            color: "bg-[#EDF6FF]",
+            action: "Review",
+            icon: <WithdrawIcon className="w-6 h-6" />,
+            iconColor: "text-[#006ADC]",
             iconBg: "bg-white",
-            btnbg: "bg-[#F34F4F] hover:bg-[#D93F3F]"
+            btnbg: "bg-[#006ADC] hover:bg-[#0052A3]",
+            onClick: () => navigate("/dashboard/withdraw")
         },
     ];
 
@@ -94,8 +122,8 @@ const EarningsSummaryChart = ({ months }) => {
                     const transformedData = earnings.map(item => ({
                         month: item.month,
                         earnings: item.totalRevenue,
-                        serviceRevenue: item.serviceRequestRevenue,
-                        bundleRevenue: item.bundleRevenue,
+                        serviceRevenue: item.serviceRevenue || 0,
+                        bundleRevenue: item.bundleRevenue || 0,
                         commission: item.commission
                     }));
 
@@ -175,11 +203,11 @@ const EarningsSummaryChart = ({ months }) => {
                     </div>
                     <div className="bg-gray-50 p-3 rounded-lg">
                         <p className="text-xs text-gray-600">Service Revenue</p>
-                        <p className="text-lg font-bold text-blue-600">{formatCurrency(summary.totalServiceRequestRevenue)}</p>
+                        <p className="text-lg font-bold text-blue-600">{formatCurrency(summary.totalServiceRevenue || 0)}</p>
                     </div>
                     <div className="bg-gray-50 p-3 rounded-lg">
                         <p className="text-xs text-gray-600">Bundle Revenue</p>
-                        <p className="text-lg font-bold text-purple-600">{formatCurrency(summary.totalBundleRevenue)}</p>
+                        <p className="text-lg font-bold text-purple-600">{formatCurrency(summary.totalBundleRevenue || 0)}</p>
                     </div>
                 </div>
             )}

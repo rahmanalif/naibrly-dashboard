@@ -30,6 +30,8 @@ const BundleOfferIcon = () => (
 // Date Range Picker Component
 const DateRangePicker = ({ dateRange, setDateRange }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState(null);
+  const [tempEndDate, setTempEndDate] = useState(null);
 
   const formatDate = (date) => {
     if (!date) return "";
@@ -39,10 +41,31 @@ const DateRangePicker = ({ dateRange, setDateRange }) => {
 
   const displayText = dateRange?.from && dateRange?.to
     ? `${formatDate(dateRange.from)} - ${formatDate(dateRange.to)}`
-    : "Select date range";
+    : "All Time";
+
+  const handleOpenChange = (open) => {
+    if (open) {
+      setTempStartDate(dateRange?.from || null);
+      setTempEndDate(dateRange?.to || null);
+    }
+    setIsOpen(open);
+  };
+
+  const handleApply = () => {
+    if (tempStartDate && tempEndDate) {
+      setDateRange({ from: tempStartDate, to: tempEndDate });
+      setIsOpen(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setTempStartDate(null);
+    setTempEndDate(null);
+    setIsOpen(false);
+  };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -52,19 +75,51 @@ const DateRangePicker = ({ dateRange, setDateRange }) => {
           <span className="text-sm text-gray-700">{displayText}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="range"
-          selected={dateRange}
-          onSelect={(range) => {
-            setDateRange(range);
-            if (range?.from && range?.to) {
-              setIsOpen(false);
-            }
-          }}
-          numberOfMonths={1}
-          initialFocus
-        />
+      <PopoverContent className="w-auto p-4" align="start">
+        <div className="space-y-4">
+          <div className="text-sm font-semibold text-gray-900 mb-2">Select Date Range</div>
+
+          {/* Start Date */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-700">Start Date</label>
+            <Calendar
+              mode="single"
+              selected={tempStartDate}
+              onSelect={setTempStartDate}
+              initialFocus
+              disabled={(date) => tempEndDate && date > tempEndDate}
+            />
+          </div>
+
+          {/* End Date */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-700">End Date</label>
+            <Calendar
+              mode="single"
+              selected={tempEndDate}
+              onSelect={setTempEndDate}
+              disabled={(date) => tempStartDate && date < tempStartDate}
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-2">
+            <Button
+              onClick={handleCancel}
+              variant="outline"
+              className="flex-1 text-sm"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApply}
+              disabled={!tempStartDate || !tempEndDate}
+              className="flex-1 bg-[#0E7A60] hover:bg-[#0A5F4A] text-white text-sm"
+            >
+              Apply
+            </Button>
+          </div>
+        </div>
       </PopoverContent>
     </Popover>
   );
@@ -122,27 +177,34 @@ const BundleOfferDialog = () => {
 };
 
 // Main Dashboard Header Component
-const DashboardHeader = () => {
-  const [dateRange, setDateRange] = useState({
-    from: new Date(2025, 7, 1), // Aug 1, 2025
-    to: new Date(2025, 9, 31),  // Oct 31, 2025
-  });
-
-  const handleRefresh = () => {
-    console.log("Refreshing dashboard...");
-    // Add refresh logic here
+const DashboardHeader = ({ dateRange, setDateRange, onRefresh }) => {
+  const handleAllTime = () => {
+    setDateRange({ from: null, to: null });
   };
+
+  const isAllTime = !dateRange?.from || !dateRange?.to;
 
   return (
     <div className="flex items-center justify-between py-4 px-2">
       <div className="flex items-center gap-3">
         <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
+        <Button
+          variant={isAllTime ? "default" : "outline"}
+          onClick={handleAllTime}
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 ${
+            isAllTime
+              ? "bg-[#0E7A60] hover:bg-[#0A5F4A] text-white"
+              : "bg-white border border-gray-200 hover:bg-gray-50 text-gray-700"
+          }`}
+        >
+          <span className="text-sm">All Time</span>
+        </Button>
       </div>
       <div className="flex items-center gap-3">
         <BundleOfferDialog />
         <Button
           variant="outline"
-          onClick={handleRefresh}
+          onClick={onRefresh}
           className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50"
         >
           <RefreshCw className="w-4 h-4 text-gray-600" />

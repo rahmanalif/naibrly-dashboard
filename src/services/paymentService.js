@@ -40,6 +40,19 @@ export const getEarningsSummary = async (months = 6) => {
 };
 
 /**
+ * Get dashboard stats including pending actions (Admin only)
+ * @returns {Promise} - Dashboard statistics and pending actions data
+ */
+export const getDashboardStats = async () => {
+    try {
+        const response = await api.get('/admin/dashboard/stats');
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+/**
  * Get commission earnings report (Admin only)
  * @param {Object} params - Query parameters
  * @param {string} params.startDate - Start date (ISO format)

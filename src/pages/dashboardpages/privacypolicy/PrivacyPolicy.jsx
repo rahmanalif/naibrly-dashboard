@@ -21,8 +21,8 @@ const PrivacyPolicy = () => {
       setLoading(true);
       const response = await getPrivacyPolicy();
       if (response.success) {
-        setContent(response.data.content || "");
-        setLastUpdated(response.data.lastUpdated || "");
+        setContent(response.data.content?.content || "");
+        setLastUpdated(response.data.content?.updatedAt || "");
       }
     } catch (error) {
       console.error('Error fetching privacy policy:', error);

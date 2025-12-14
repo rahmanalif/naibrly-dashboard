@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -22,18 +22,58 @@ import {
   Link,
   ImageIcon,
 } from "lucide-react";
+import { MdOutlineKeyboardArrowLeft } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
+import { getAboutUs, updateAboutUs } from "../../../services/settingsService";
+import { toast } from "sonner";
 
 const EditAbout = () => {
-  const [content, setContent] =
-    useState(`Lorem ipsum dolor sit amet consectetur. Fringilla a cras vitae orci. Egestas duis id nisl sed ante congue scelerisque. Eleifend facilisis aliquet tempus morbi leo sagittis. Pellentesque odio amet turpis habitant. Imperdiet tincidunt nisl consectetur hendrerit accumsan vehicula imperdiet mattis. Neque a vitae diam pharetra duis habitasse convallis luctus pulvinar. Pharetra nunc morbi elementum nisl magna convallis arcu enim tortor. Cursus a sed tortor enim mi imperdiet massa donec mauris. Sem morbi morbi posuere faucibus. Cras risus ultrices duis pharetra sit porttitor elementum sagittis elementum. Ut vitae blandit pulvinar fermentum in id sed. At pellentesque non semper eget egestas vulputate id volutpat quis. Dolor etiam sodales at elementum mattis nibh quam placerat ut. Suspendisse est adipiscing proin et. Leo nisl bibendum donec ac non eget euismod suscipit. At ultrices nullam ipsum tellus. Non dictum orci at tortor convallis tortor suspendisse. Ac duis senectus arcu nullam in suspendisse vitae. Tellus interdum enim lorem vel morbi lectus.
-
-Lorem ipsum dolor sit amet consectetur. Fringilla a cras vitae orci. Egestas duis id nisl sed ante congue scelerisque. Eleifend facilisis aliquet tempus morbi leo sagittis. Pellentesque odio amet turpis habitant. Imperdiet tincidunt nisl consectetur hendrerit accumsan vehicula imperdiet mattis. Neque a vitae diam pharetra duis habitasse convallis luctus pulvinar. Pharetra nunc morbi elementum nisl magna convallis arcu enim tortor. Cursus a sed tortor enim mi imperdiet massa donec mauris. Sem morbi morbi posuere faucibus. Cras risus ultrices duis pharetra sit porttitor elementum sagittis elementum. Ut vitae blandit pulvinar fermentum in id sed. At pellentesque non semper eget egestas vulputate id volutpat quis. Dolor etiam sodales at elementum mattis nibh quam placerat ut. Suspendisse est adipiscing proin et. Leo nisl bibendum donec ac non eget euismod suscipit. At ultrices nullam ipsum tellus. Non dictum orci at tortor convallis tortor suspendisse. Ac duis senectus arcu nullam in suspendisse vitae. Tellus interdum enim lorem vel morbi lectus.`);
-
+  const [content, setContent] = useState("");
   const [fontSize, setFontSize] = useState("16");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleSaveChanges = () => {
-    console.log("Saving content:", content);
-    alert("Content saved successfully!");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchAboutUs();
+  }, []);
+
+  const fetchAboutUs = async () => {
+    try {
+      setLoading(true);
+      const response = await getAboutUs();
+      if (response.success) {
+        setContent(response.data.content?.content || "");
+      }
+    } catch (error) {
+      console.error('Error fetching about us:', error);
+      toast.error(error?.message || 'Failed to load about us');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      if (!content.trim()) {
+        toast.error('Content cannot be empty');
+        return;
+      }
+
+      setSaving(true);
+      const response = await updateAboutUs(content);
+
+      if (response.success) {
+        toast.success('About Us updated successfully!');
+        setTimeout(() => navigate('/dashboard/settings'), 1000);
+      }
+    } catch (error) {
+      console.error('Error updating about us:', error);
+      toast.error(error?.message || 'Failed to update about us');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const insertText = (before, after = "") => {
@@ -51,12 +91,12 @@ Lorem ipsum dolor sit amet consectetur. Fringilla a cras vitae orci. Egestas dui
     {
       icon: Underline,
       label: "Underline",
-      action: () => insertText("<u>Underlined Text</u>"),
+      action: () => insertText("<u>Underlined</u>"),
     },
     {
       icon: Strikethrough,
       label: "Strikethrough",
-      action: () => insertText("~~Strikethrough Text~~"),
+      action: () => insertText("~~Strikethrough~~"),
     },
   ];
 
@@ -98,119 +138,123 @@ Lorem ipsum dolor sit amet consectetur. Fringilla a cras vitae orci. Egestas dui
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className=" bg-gray-100">
-      {/* Header */}
-      <div className="bg-[#017783] text-white p-4 flex items-center gap-3">
-        <ChevronLeft className="h-6 w-6" />
-        <h1 className="text-lg font-medium">Edit about us</h1>
+    <div className="">
+
+      <div className="flex items-center justify-between mb-4">
+
+
+        {/* Header */}
+        <div className=" text-black flex items-center gap-3">
+
+          <h1 className="flex items-center text-lg font-medium"> <MdOutlineKeyboardArrowLeft size={40} className="cursor-pointer" onClick={() => navigate(-1)} />  Edit About Us</h1>
+        </div>
+
+        {/* Save Button */}
+        <div className="">
+          <Button
+            onClick={handleSaveChanges}
+            disabled={saving}
+            className="bg-[#0E7A60] hover:bg-[#0E7A60] text-white px-8 py-2 rounded-md disabled:opacity-50"
+          >
+            {saving ? 'Updating...' : 'Update'}
+          </Button>
+        </div>
+
       </div>
 
       {/* Main Content */}
       <div className="">
-        <div className=" mx-auto">
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+        <div className="mx-auto">
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm text-[#0E7A60] p-4">
             {/* Toolbar */}
-            <div className="border-b border-gray-200 p-3 bg-gray-50">
+            <div className="rounded-lg p-3 bg-gray-50">
               <div className="flex items-center gap-2 flex-wrap">
                 {/* Font Size Selector */}
                 <Select value={fontSize} onValueChange={setFontSize}>
-                  <SelectTrigger className="w-16 h-8 text-sm">
-                    <SelectValue />
+                  <SelectTrigger className="w-16 h-8 text-sm text-[#0E7A60]">
+                    <SelectValue className="text-[#0E7A60]"/>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="12">12</SelectItem>
-                    <SelectItem value="14">14</SelectItem>
-                    <SelectItem value="16">16</SelectItem>
-                    <SelectItem value="18">18</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="24">24</SelectItem>
+                    {["12", "14", "16", "18", "20", "24"].map((size) => (
+                      <SelectItem key={size} value={size} className="text-[#0E7A60]">
+                        {size}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
-                {/* Separator */}
-                <div className="w-px h-6 bg-gray-300 mx-1" />
-
                 {/* Format Buttons */}
-                {formatButtons.map((button) => {
-                  const Icon = button.icon;
-                  return (
-                    <Button
-                      key={button.label}
-                      variant="ghost"
-                      size="sm"
-                      onClick={button.action}
-                      className="h-8 w-8 p-0 hover:bg-gray-200"
-                      title={button.label}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </Button>
-                  );
-                })}
-
-                {/* Separator */}
                 <div className="w-px h-6 bg-gray-300 mx-1" />
+                {formatButtons.map(({ icon: Icon, label, action }) => (
+                  <Button
+                    key={label}
+                    variant="ghost"
+                    size="sm"
+                    onClick={action}
+                    className="h-8 w-8 p-0 hover:bg-gray-200"
+                    title={label}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </Button>
+                ))}
 
                 {/* Alignment Buttons */}
-                {alignButtons.map((button) => {
-                  const Icon = button.icon;
-                  return (
-                    <Button
-                      key={button.label}
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 hover:bg-gray-200"
-                      title={button.label}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </Button>
-                  );
-                })}
-
-                {/* Separator */}
                 <div className="w-px h-6 bg-gray-300 mx-1" />
+                {alignButtons.map(({ icon: Icon, label }) => (
+                  <Button
+                    key={label}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 hover:bg-gray-200"
+                    title={label}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </Button>
+                ))}
 
                 {/* List Buttons */}
-                {listButtons.map((button) => {
-                  const Icon = button.icon;
-                  return (
-                    <Button
-                      key={button.label}
-                      variant="ghost"
-                      size="sm"
-                      onClick={button.action}
-                      className="h-8 w-8 p-0 hover:bg-gray-200"
-                      title={button.label}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </Button>
-                  );
-                })}
-
-                {/* Separator */}
                 <div className="w-px h-6 bg-gray-300 mx-1" />
+                {listButtons.map(({ icon: Icon, label, action }) => (
+                  <Button
+                    key={label}
+                    variant="ghost"
+                    size="sm"
+                    onClick={action}
+                    className="h-8 w-8 p-0 hover:bg-gray-200"
+                    title={label}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </Button>
+                ))}
 
                 {/* Insert Buttons */}
-                {insertButtons.map((button) => {
-                  const Icon = button.icon;
-                  return (
-                    <Button
-                      key={button.label}
-                      variant="ghost"
-                      size="sm"
-                      onClick={button.action}
-                      className="h-8 w-8 p-0 hover:bg-gray-200"
-                      title={button.label}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </Button>
-                  );
-                })}
+                <div className="w-px h-6 bg-gray-300 mx-1" />
+                {insertButtons.map(({ icon: Icon, label, action }) => (
+                  <Button
+                    key={label}
+                    variant="ghost"
+                    size="sm"
+                    onClick={action}
+                    className="h-8 w-8 p-0 hover:bg-gray-200"
+                    title={label}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </Button>
+                ))}
               </div>
             </div>
 
-            {/* Editor */}
-            <div className="relative">
+            {/* Textarea */}
+            <div className="relative text-black">
               <Textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -218,16 +262,6 @@ Lorem ipsum dolor sit amet consectetur. Fringilla a cras vitae orci. Egestas dui
                 className="h-[500px] border-0 resize-none focus:ring-0 focus:outline-none text-sm leading-relaxed overflow-y-auto"
                 style={{ fontSize: `${fontSize}px` }}
               />
-            </div>
-
-            {/* Save Button */}
-            <div className="p-4 border-t border-gray-200">
-              <Button
-                onClick={handleSaveChanges}
-                className="bg-[#017783] hover:bg-[#015a63] text-white px-8 py-2 rounded-md"
-              >
-                Save Changes
-              </Button>
             </div>
           </div>
         </div>

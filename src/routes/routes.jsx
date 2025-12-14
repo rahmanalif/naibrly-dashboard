@@ -11,6 +11,9 @@ import ResetPassword from "@/pages/auth/ResetPassword";
 import ProtectedRoute from "./ProtectedRoute";
 import Logout from "@/pages/auth/Logout";
 
+// Public Pages
+import ContactSupport from "@/pages/ContactSupport/ContactSupport";
+
 // Dashboard Pages
 import DashboardOverview from "@/pages/dashboardpages/DashboardOverview/DashboardOverview";
 import Profile from "@/pages/dashboardpages/personalinformation/Profile";
@@ -34,6 +37,7 @@ import ProvidersAccount from "@/pages/dashboardpages/providers/ProvidersAccount"
 import ProvidersBilling from "@/pages/dashboardpages/providers/ProvidersBilling";
 import UserAccount from "@/pages/dashboardpages/user/UserAccount";
 import QuickChat from "@/pages/dashboardpages/quickchat/QuickChat";
+import MyTickets from "@/pages/dashboardpages/mytickets/MyTickets";
 import ErrorPage from "@/pages/error/ErrorPage";
 
 const routes = createBrowserRouter([
@@ -67,6 +71,11 @@ const routes = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
   {
+    path: "/contact-support",
+    element: <ContactSupport />,
+    errorElement: <ErrorPage />,
+  },
+  {
     path: "/dashboard",
     element: <ProtectedRoute />,
     errorElement: <ErrorPage />,
@@ -87,6 +96,7 @@ const routes = createBrowserRouter([
           { path: "withdraw", element: <Withdraw /> },
           { path: "quickchat", element: <QuickChat /> },
           { path: "support", element: <Support /> },
+          { path: "my-tickets", element: <MyTickets /> },
 
           // Settings Routes
           { path: "settings", element: <Setting /> },
@@ -98,6 +108,7 @@ const routes = createBrowserRouter([
           { path: "settings/privacy", element: <PrivacyPolicy /> },
           { path: "settings/editprivacy", element: <EditPrivacyPolicy /> },
           { path: "settings/faq", element: <Faq /> },
+          { path: "settings/about", element: <AboutUs /> },
           { path: "settings/editabout", element: <EditAbout /> },
         ],
       },

@@ -23,7 +23,14 @@ const Profile = () => {
       setLoading(true);
       const response = await getAdminProfile();
       if (response.success) {
-        setProfile(response.data);
+        const admin = response.data.admin;
+        setProfile({
+          name: `${admin.firstName || ""} ${admin.lastName || ""}`.trim(),
+          email: admin.email,
+          phone: admin.phone,
+          avatar: admin.profileImage?.url || "",
+          role: admin.adminRole || admin.role
+        });
       }
     } catch (error) {
       console.error('Error fetching profile:', error);

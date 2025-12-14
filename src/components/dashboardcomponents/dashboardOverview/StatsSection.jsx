@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import api from "@/lib/api";
 import { getAllTransactions } from "@/services/paymentService";
 
-const StatsSection = ({ showBalance = false }) => {
+const StatsSection = ({ showBalance = false, dateRange = null, refreshTrigger = 0 }) => {
   const [stats, setStats] = useState({
     totalCustomers: 0,
     totalProviders: 0,
@@ -19,8 +19,25 @@ const StatsSection = ({ showBalance = false }) => {
       try {
         setLoading(true);
 
+        // Build URL with date range parameters if provided
+        let url = '/admin/dashboard/stats';
+        if (dateRange?.from && dateRange?.to) {
+          const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          };
+
+          const params = new URLSearchParams({
+            startDate: formatDate(dateRange.from),
+            endDate: formatDate(dateRange.to)
+          });
+          url += `?${params.toString()}`;
+        }
+
         // Fetch basic dashboard stats
-        const response = await api.get('/admin/dashboard/stats');
+        const response = await api.get(url);
 
         let calculatedBalance = 0;
 
@@ -62,7 +79,7 @@ const StatsSection = ({ showBalance = false }) => {
     };
 
     fetchDashboardStats();
-  }, [showBalance]);
+  }, [showBalance, dateRange, refreshTrigger]);
 
   const formatNumber = (num) => {
     return new Intl.NumberFormat('en-US').format(num);

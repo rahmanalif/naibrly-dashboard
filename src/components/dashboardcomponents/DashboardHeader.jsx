@@ -118,10 +118,12 @@ import {
 import { Bell, Search, LogOut, User, Settings } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { MobileSidebar } from "./DashboardSidebar";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 export default function DashboardHeader() {
   const navigate = useNavigate();
   const location = useLocation(); // Hook to get the current location (route)
+  const { unreadCount } = useNotifications();
 
   const handleLogout = () => {
     navigate("/signin");
@@ -186,9 +188,11 @@ export default function DashboardHeader() {
               className="text-white bg-white/10 hover:bg-white/20 rounded-full relative h-8 w-8 sm:h-10 sm:w-10 transition-colors"
             >
               <Bell className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                3
-              </span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Button>
           </Link>
 

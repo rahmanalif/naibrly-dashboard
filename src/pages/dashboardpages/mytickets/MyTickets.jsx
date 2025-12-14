@@ -1,40 +1,40 @@
-"use client";
 import React, { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronLeft, ChevronRight, User, Loader2 } from "lucide-react";
-import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogHeader } from "@/components/ui/dialog";
+import { ChevronDown, ChevronLeft, ChevronRight, User, Loader2, Plus, MessageCircle } from "lucide-react";
+import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import {
-  getAllTickets,
-  getTicketStats,
-  updateTicketStatus,
+  getMyTickets,
+  addUserReplyToTicket,
   formatTicketTime,
   getStatusColors
 } from "@/services/supportService";
 
-const Support = () => {
+const MyTickets = () => {
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
-  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  // Reply state
+  const [replyMessage, setReplyMessage] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch tickets
-  const fetchTickets = async () => {
+  // Fetch user's tickets
+  const fetchMyTickets = async () => {
     try {
       setLoading(true);
       const params = {
@@ -43,53 +43,25 @@ const Support = () => {
       };
 
       if (statusFilter) params.status = statusFilter;
-      if (searchQuery) params.search = searchQuery;
 
-      const response = await getAllTickets(params);
+      const response = await getMyTickets(params);
 
       if (response.success) {
         setTickets(response.data.tickets);
         setTotalPages(response.data.totalPages);
-        setTotalItems(response.data.total);
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to fetch tickets');
+      toast.error(error.message || 'Failed to fetch your tickets');
       console.error('Error fetching tickets:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch statistics
-  const fetchStats = async () => {
-    try {
-      const response = await getTicketStats();
-      if (response.success) {
-        setStats(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    }
-  };
-
   // Initial load
   useEffect(() => {
-    fetchTickets();
-    fetchStats();
+    fetchMyTickets();
   }, [currentPage, itemsPerPage, statusFilter]);
-
-  // Search with debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (currentPage === 1) {
-        fetchTickets();
-      } else {
-        setCurrentPage(1);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   const getStatusBadge = (status) => {
     const colors = getStatusColors(status);
@@ -100,32 +72,39 @@ const Support = () => {
     );
   };
 
-  const handleStatusClick = (ticket) => {
+  const handleTicketClick = (ticket) => {
     setSelectedTicket(ticket);
+    setReplyMessage("");
     setOpenDialog(true);
   };
 
-  const handleMarkAsResolved = async () => {
-    if (!selectedTicket) return;
+  const handleSendReply = async () => {
+    if (!replyMessage.trim() || !selectedTicket) {
+      toast.error("Please enter a message");
+      return;
+    }
 
     try {
-      setUpdatingStatus(true);
-      const response = await updateTicketStatus(selectedTicket._id, {
-        status: 'Resolved',
-        notes: 'Marked as resolved by admin'
+      setSendingReply(true);
+      const response = await addUserReplyToTicket(selectedTicket._id, {
+        message: replyMessage.trim()
       });
 
       if (response.success) {
-        toast.success('Ticket marked as resolved');
-        setOpenDialog(false);
-        fetchTickets();
-        fetchStats();
+        toast.success("Reply sent successfully");
+        setReplyMessage("");
+
+        // Update the selected ticket with new reply
+        setSelectedTicket(response.data);
+
+        // Refresh tickets list
+        fetchMyTickets();
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to update ticket status');
-      console.error('Error updating status:', error);
+      toast.error(error.message || "Failed to send reply");
+      console.error("Error sending reply:", error);
     } finally {
-      setUpdatingStatus(false);
+      setSendingReply(false);
     }
   };
 
@@ -137,60 +116,35 @@ const Support = () => {
 
   return (
     <div className="space-y-4">
-      {/* Statistics Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">Total Tickets</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-600">{stats.unsolved}</div>
-              <p className="text-xs text-muted-foreground">Unsolved</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-yellow-600">{stats.open}</div>
-              <p className="text-xs text-muted-foreground">Open</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
-              <p className="text-xs text-muted-foreground">Resolved</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
       <Card className="shadow-sm border rounded-xl">
         <CardHeader className="pb-0">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <CardTitle>Support Tickets</CardTitle>
+            <div>
+              <CardTitle>My Support Tickets</CardTitle>
+              <p className="text-sm text-gray-500 mt-1">
+                View and manage your support tickets
+              </p>
+            </div>
 
-            {/* Filters */}
             <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Search tickets..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="border rounded-md px-3 py-1 text-sm"
-              />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="border rounded-md px-3 py-1 text-sm"
+                className="border rounded-md px-3 py-2 text-sm"
               >
                 <option value="">All Status</option>
                 <option value="Unsolved">Unsolved</option>
                 <option value="Open">Open</option>
                 <option value="Resolved">Resolved</option>
               </select>
+
+              <Button
+                onClick={() => navigate("/contact-support")}
+                className="bg-[#0E7A60] hover:bg-[#0E7A60]/90"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Ticket
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -202,39 +156,51 @@ const Support = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-[#0E7A60]" />
               </div>
             ) : tickets.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No tickets found
+              <div className="text-center py-12">
+                <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500 mb-4">No tickets found</p>
+                <Button
+                  onClick={() => navigate("/contact-support")}
+                  className="bg-[#0E7A60] hover:bg-[#0E7A60]/90"
+                >
+                  Create Your First Ticket
+                </Button>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow className="text-gray-500">
                     <TableHead>Ticket ID</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
                     <TableHead>Subject</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Priority</TableHead>
                     <TableHead>Created</TableHead>
-                    <TableHead>Solved Date</TableHead>
                     <TableHead className="text-right">Status</TableHead>
                   </TableRow>
                 </TableHeader>
 
                 <TableBody>
                   {tickets.map((ticket) => (
-                    <TableRow key={ticket._id} className="hover:bg-[#0E7A601A]">
-                      <TableCell>{ticket.ticketId}</TableCell>
-                      <TableCell>{ticket.name}</TableCell>
-                      <TableCell>{ticket.email}</TableCell>
+                    <TableRow
+                      key={ticket._id}
+                      className="hover:bg-[#0E7A601A] cursor-pointer"
+                      onClick={() => handleTicketClick(ticket)}
+                    >
+                      <TableCell className="font-medium">{ticket.ticketId}</TableCell>
                       <TableCell>{ticket.subject}</TableCell>
-                      <TableCell>{formatTicketTime(ticket.createdAt)}</TableCell>
+                      <TableCell>{ticket.category || 'N/A'}</TableCell>
                       <TableCell>
-                        {ticket.solvedDate ? formatTicketTime(ticket.solvedDate) : 'N/A'}
+                        <Badge className={
+                          ticket.priority === 'High' || ticket.priority === 'Urgent'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-gray-100 text-gray-700'
+                        }>
+                          {ticket.priority || 'Medium'}
+                        </Badge>
                       </TableCell>
+                      <TableCell>{formatTicketTime(ticket.createdAt)}</TableCell>
                       <TableCell className="text-right">
-                        <div
-                          className="flex items-center justify-end gap-2 cursor-pointer"
-                          onClick={() => handleStatusClick(ticket)}
-                        >
+                        <div className="flex items-center justify-end gap-2">
                           {getStatusBadge(ticket.status)} <ChevronDown size={14} />
                         </div>
                       </TableCell>
@@ -284,74 +250,63 @@ const Support = () => {
           )}
         </CardContent>
 
-        {/* Dialog */}
+        {/* Ticket Detail Dialog */}
         {selectedTicket && (
           <Dialog open={openDialog} onOpenChange={setOpenDialog}>
             <DialogTrigger asChild>
               <button className="hidden">Open Dialog</button>
             </DialogTrigger>
 
-            <DialogContent className="w-full md:max-w-5xl lg:max-w-7xl p-8 bg-white rounded-lg">
+            <DialogContent className="w-full md:max-w-5xl lg:max-w-7xl p-8 bg-white rounded-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <div className="flex justify-between items-center bg-[#0E7A601A]/90 py-3 px-4 rounded-sm">
                   <DialogTitle>
                     <span className="font-bold">Ticket #{selectedTicket.ticketId}</span> - {selectedTicket.subject}
                   </DialogTitle>
-                  {selectedTicket.status !== 'Resolved' && (
-                    <Button
-                      className="bg-[#0E7A60] rounded-sm text-white"
-                      onClick={handleMarkAsResolved}
-                      disabled={updatingStatus}
-                    >
-                      {updatingStatus ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Updating...
-                        </>
-                      ) : (
-                        'Mark as Resolved'
-                      )}
-                    </Button>
-                  )}
+                  {getStatusBadge(selectedTicket.status)}
                 </div>
               </DialogHeader>
 
-              <div className="flex flex-row p-3 gap-3 rounded-full mt-6">
-                <User size={32} className="text-[#0E7A60] bg-[#F4F7FE] rounded-full p-1"/>
-                <p className="font-medium text-2xl">{selectedTicket.name}</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Left Section - Message */}
-                <div className="col-span-2 space-y-4 p-6 bg-[#F4F7FE] shadow-sm rounded-lg">
-                  <h4 className="font-semibold text-gray-800">Description</h4>
-                  <p className="text-gray-700 whitespace-pre-wrap">{selectedTicket.description}</p>
-
-                  {selectedTicket.attachments && selectedTicket.attachments.length > 0 && (
-                    <div className="mt-4">
-                      <h5 className="font-medium text-gray-700 mb-2">Attachments:</h5>
-                      <div className="space-y-1">
-                        {selectedTicket.attachments.map((url, index) => (
-                          <a
-                            key={index}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline block"
-                          >
-                            Attachment {index + 1}
-                          </a>
-                        ))}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                {/* Left Section - Messages */}
+                <div className="col-span-2 space-y-4">
+                  {/* Original Message */}
+                  <div className="p-6 bg-[#F4F7FE] shadow-sm rounded-lg">
+                    <div className="flex items-center gap-3 mb-4">
+                      <User size={32} className="text-[#0E7A60] bg-white rounded-full p-1"/>
+                      <div>
+                        <p className="font-medium text-lg">{selectedTicket.name}</p>
+                        <p className="text-sm text-gray-500">{formatTicketTime(selectedTicket.createdAt)}</p>
                       </div>
                     </div>
-                  )}
+                    <p className="text-gray-700 whitespace-pre-wrap">{selectedTicket.description}</p>
+
+                    {selectedTicket.attachments && selectedTicket.attachments.length > 0 && (
+                      <div className="mt-4">
+                        <h5 className="font-medium text-gray-700 mb-2">Attachments:</h5>
+                        <div className="space-y-1">
+                          {selectedTicket.attachments.map((url, index) => (
+                            <a
+                              key={index}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline block"
+                            >
+                              Attachment {index + 1}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Replies Section */}
                   {selectedTicket.replies && selectedTicket.replies.length > 0 && (
-                    <div className="mt-6 space-y-4">
+                    <div className="space-y-4">
                       <h4 className="font-semibold text-gray-800">Replies</h4>
                       {selectedTicket.replies.map((reply, index) => (
-                        <div key={index} className="bg-white p-4 rounded-lg">
+                        <div key={index} className="p-4 bg-white border rounded-lg">
                           <div className="flex items-center gap-2 mb-2">
                             <User size={20} className="text-gray-600" />
                             <span className="font-medium">{reply.author}</span>
@@ -362,6 +317,45 @@ const Support = () => {
                           <p className="text-gray-700">{reply.message}</p>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Reply Input */}
+                  {selectedTicket.status !== 'Resolved' && (
+                    <div className="p-4 bg-gray-50 border rounded-lg">
+                      <h4 className="font-semibold text-gray-800 mb-3">Add Reply</h4>
+                      <textarea
+                        value={replyMessage}
+                        onChange={(e) => setReplyMessage(e.target.value)}
+                        placeholder="Type your message here..."
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0E7A60] focus:border-transparent resize-none"
+                      />
+                      <Button
+                        onClick={handleSendReply}
+                        disabled={sendingReply || !replyMessage.trim()}
+                        className="mt-3 bg-[#0E7A60] hover:bg-[#0E7A60]/90"
+                      >
+                        {sendingReply ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <MessageCircle className="mr-2 h-4 w-4" />
+                            Send Reply
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+
+                  {selectedTicket.status === 'Resolved' && (
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+                      <p className="text-green-700 font-medium">
+                        This ticket has been resolved
+                      </p>
                     </div>
                   )}
                 </div>
@@ -383,9 +377,6 @@ const Support = () => {
                       <span className="font-medium">Category:</span> {selectedTicket.category}
                     </p>
                   )}
-                  <p className="text-gray-700">
-                    <span className="font-medium">Requester:</span> {selectedTicket.name}
-                  </p>
                   <p className="text-gray-700">
                     <span className="font-medium">Email:</span> {selectedTicket.email}
                   </p>
@@ -410,4 +401,4 @@ const Support = () => {
   );
 };
 
-export default Support;
+export default MyTickets;
