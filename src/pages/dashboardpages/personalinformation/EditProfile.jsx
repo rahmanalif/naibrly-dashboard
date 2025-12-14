@@ -7,46 +7,36 @@ import { Upload } from "lucide-react";
 import flag from "../../../assets/flag.png";
 import { Link, useNavigate } from "react-router-dom";
 import { MdOutlineKeyboardArrowLeft } from "react-icons/md";
-import { getAdminProfile, updateAdminProfile, validateEmail } from "../../../services/settingsService";
+import { updateAdminProfile, uploadAdminProfileImage, validateEmail } from "../../../services/settingsService";
+import { useAdmin } from "@/contexts/AdminContext";
 import { toast } from "sonner";
 
 const EditProfile = () => {
 
   const navigate = useNavigate();
+  const { admin, loading, fetchAdminProfile, updateAdminProfile: updateAdminContext } = useAdmin();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
   });
 
-  const [profileImage, setProfileImage] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const response = await getAdminProfile();
-      if (response.success) {
-        const profile = response.data.admin;
-        setFormData({
-          name: `${profile.firstName || ""} ${profile.lastName || ""}`.trim(),
-          email: profile.email || "",
-          phone: profile.phone?.replace('+880', '') || "",
-        });
-        setProfileImage(profile.profileImage?.url || "");
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      toast.error(error?.message || 'Failed to load profile');
-    } finally {
-      setLoading(false);
+    if (admin) {
+      setFormData({
+        name: admin.name || "",
+        email: admin.email || "",
+        phone: admin.phone?.replace('+880', '') || "",
+      });
+      setProfileImagePreview(admin.profileImage || "");
     }
-  };
+  }, [admin]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -80,20 +70,41 @@ const EditProfile = () => {
 
       setSaving(true);
 
+      // Upload profile image to Cloudinary if a new one is selected
+      let uploadedImageUrl = profileImagePreview;
+      if (profileImageFile) {
+        try {
+          setUploading(true);
+          const uploadResponse = await uploadAdminProfileImage(profileImageFile);
+          if (uploadResponse.success) {
+            uploadedImageUrl = uploadResponse.data.profileImage.url;
+            toast.success('Profile image uploaded successfully!');
+          }
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          toast.error(uploadError?.message || 'Failed to upload image');
+          setSaving(false);
+          setUploading(false);
+          return;
+        } finally {
+          setUploading(false);
+        }
+      }
+
       const updateData = {
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: `+880${formData.phone}`,
-        avatar: profileImage,
       };
 
       const response = await updateAdminProfile(updateData);
 
       if (response.success) {
         toast.success('Profile updated successfully!');
-        // Update localStorage admin data if it exists
-        const adminData = JSON.parse(localStorage.getItem('admin') || '{}');
-        localStorage.setItem('admin', JSON.stringify({ ...adminData, ...response.data }));
+
+        // Update admin context
+        await fetchAdminProfile();
+
         // Navigate back to profile page
         setTimeout(() => navigate('/dashboard/settings/profile'), 1000);
       }
@@ -108,9 +119,23 @@ const EditProfile = () => {
   const handleImageUpload = (event) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select a valid image file');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
+
+      setProfileImageFile(file);
+
       const reader = new FileReader();
       reader.onload = (e) => {
-        setProfileImage(e.target?.result);
+        setProfileImagePreview(e.target?.result);
       };
       reader.readAsDataURL(file);
     }
@@ -146,10 +171,10 @@ const EditProfile = () => {
 
         <Button
           onClick={handleSaveChanges}
-          disabled={saving}
+          disabled={saving || uploading}
           className=" bg-[#0E7A60] hover:bg-[#0E7A60] text-white disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Changes'}
+          {uploading ? 'Uploading...' : saving ? 'Saving...' : 'Save Changes'}
         </Button>
 
       </div>
@@ -163,7 +188,7 @@ const EditProfile = () => {
             <div className="relative mb-4">
               <Avatar className="h-40 w-40">
                 <AvatarImage
-                  src={profileImage || "/placeholder.svg"}
+                  src={profileImagePreview || "/placeholder.svg"}
                   alt="Profile"
                 />
                 <AvatarFallback>{formData.name?.substring(0, 2).toUpperCase() || "AD"}</AvatarFallback>
@@ -177,10 +202,16 @@ const EditProfile = () => {
                     accept="image/*"
                     onChange={handleImageUpload}
                     className="hidden"
+                    disabled={uploading}
                   />
                 </label>
               </div>
             </div>
+            {profileImageFile && (
+              <p className="text-xs text-gray-600 text-center mb-2">
+                New image selected: {profileImageFile.name}
+              </p>
+            )}
             <p className="text-lg font-medium text-gray-800">Profile</p>
             <p className="text-gray-600">Admin</p>
           </div>

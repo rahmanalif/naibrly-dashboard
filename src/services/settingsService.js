@@ -38,6 +38,40 @@ export const updateAdminProfile = async (data) => {
     }
 };
 
+/**
+ * Upload admin profile image to Cloudinary
+ * @param {File} imageFile - Image file to upload
+ * @returns {Promise<Object>} Upload response with URL and publicId
+ */
+export const uploadAdminProfileImage = async (imageFile) => {
+    try {
+        const formData = new FormData();
+        formData.append('profileImage', imageFile);
+
+        const response = await api.post('/upload/admin/profile-image', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+/**
+ * Delete admin profile image from Cloudinary
+ * @returns {Promise<Object>} Delete response
+ */
+export const deleteAdminProfileImage = async () => {
+    try {
+        const response = await api.delete('/upload/admin/profile-image');
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
 // ==================== Password Management ====================
 
 /**

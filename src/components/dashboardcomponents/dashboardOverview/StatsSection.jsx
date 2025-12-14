@@ -1,8 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { User, Store, DollarSign, TrendingUp, Wallet } from "lucide-react";
+import { User, Store, DollarSign, TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import api from "@/lib/api";
 import { getAllTransactions } from "@/services/paymentService";
+
+// Growth Indicator Component
+const GrowthIndicator = ({ value }) => {
+  const isPositive = value >= 0;
+  const displayValue = Math.abs(value).toFixed(2);
+
+  return (
+    <div className={`mt-4 flex flex-row-reverse gap-2 items-center text-sm ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+      <p className={`mr-2 ${isPositive ? 'text-[#2FA84D]' : 'text-red-500'}`}>
+        {isPositive ? '+' : '-'}{displayValue}%
+      </p>
+      <span>
+        {isPositive ? <TrendingUp /> : <TrendingDown />}
+      </span>
+    </div>
+  );
+};
 
 const StatsSection = ({ showBalance = false, dateRange = null, refreshTrigger = 0 }) => {
   const [stats, setStats] = useState({
@@ -10,6 +27,12 @@ const StatsSection = ({ showBalance = false, dateRange = null, refreshTrigger = 
     totalProviders: 0,
     totalRevenue: 0,
     myBalance: 0,
+  });
+  const [growth, setGrowth] = useState({
+    customers: { value: 0 },
+    providers: { value: 0 },
+    revenue: { value: 0 },
+    balance: { value: 0 },
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,11 +86,20 @@ const StatsSection = ({ showBalance = false, dateRange = null, refreshTrigger = 
 
         if (response.data.success) {
           const { totalCustomers, totalProviders, totalRevenue } = response.data.data.stats;
+          const growthData = response.data.data.growth || {};
+
           setStats({
             totalCustomers: totalCustomers || 0,
             totalProviders: totalProviders || 0,
             totalRevenue: totalRevenue || 0,
             myBalance: calculatedBalance,
+          });
+
+          setGrowth({
+            customers: growthData.customers || { value: 0 },
+            providers: growthData.providers || { value: 0 },
+            revenue: growthData.revenue || { value: 0 },
+            balance: growthData.balance || { value: 0 },
           });
         }
       } catch (err) {
@@ -127,10 +159,7 @@ const StatsSection = ({ showBalance = false, dateRange = null, refreshTrigger = 
             <p className="text-2xl font-bold text-gray-900">{formatNumber(stats.totalCustomers)}</p>
           </div>
         </div>
-        <div className="mt-4 flex flex-row-reverse gap-2 items-center text-sm text-green-500">
-          <p className="mr-2 text-[#2FA84D]">+1.01%</p>
-          <span><TrendingUp /></span>
-        </div>
+        <GrowthIndicator value={growth.customers.value} />
       </div>
 
       {/* Card 2: Total Providers */}
@@ -142,10 +171,7 @@ const StatsSection = ({ showBalance = false, dateRange = null, refreshTrigger = 
             <p className="text-2xl font-bold text-gray-900">{formatNumber(stats.totalProviders)}</p>
           </div>
         </div>
-        <div className="mt-4 flex flex-row-reverse gap-2 items-center text-sm text-green-500">
-          <p className="mr-2 text-[#2FA84D]">+1.01%</p>
-          <span><TrendingUp /></span>
-        </div>
+        <GrowthIndicator value={growth.providers.value} />
       </div>
 
       {/* Card 3: Total Revenue */}
@@ -157,10 +183,7 @@ const StatsSection = ({ showBalance = false, dateRange = null, refreshTrigger = 
             <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalRevenue)}</p>
           </div>
         </div>
-        <div className="mt-4 flex flex-row-reverse gap-2 items-center text-sm text-green-500">
-          <p className="mr-2 text-[#2FA84D]">+1.01%</p>
-          <span><TrendingUp /></span>
-        </div>
+        <GrowthIndicator value={growth.revenue.value} />
       </div>
 
       {/* Card 4: My Balance (conditionally rendered) */}
@@ -173,10 +196,7 @@ const StatsSection = ({ showBalance = false, dateRange = null, refreshTrigger = 
               <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.myBalance)}</p>
             </div>
           </div>
-          <div className="mt-4 flex flex-row-reverse gap-2 items-center text-sm text-green-500">
-            <p className="mr-2 text-[#2FA84D]">+1.01%</p>
-            <span><TrendingUp /></span>
-          </div>
+          <GrowthIndicator value={growth.balance.value} />
         </div>
       )}
     </div>

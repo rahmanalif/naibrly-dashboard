@@ -119,13 +119,16 @@ import { Bell, Search, LogOut, User, Settings } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { MobileSidebar } from "./DashboardSidebar";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useAdmin } from "@/contexts/AdminContext";
 
 export default function DashboardHeader() {
   const navigate = useNavigate();
   const location = useLocation(); // Hook to get the current location (route)
   const { unreadCount } = useNotifications();
+  const { admin, logout } = useAdmin();
 
   const handleLogout = () => {
+    logout();
     navigate("/signin");
   };
 
@@ -169,7 +172,7 @@ export default function DashboardHeader() {
 
         <div className="flex items-center gap-2 sm:gap-4">
           {/* Search Filter */}
-          <div className="relative">
+          {/* <div className="relative">
             <input
               type="text"
               className="h-8 w-52  sm:w-64 pl-10 pr-3 text-black rounded-full bg-[#1C59410D] border border-gray-300 text-sm"
@@ -178,7 +181,7 @@ export default function DashboardHeader() {
             <div className="absolute top-2 left-2">
               <Search className="h-4 w-6 text-gray-400" />
             </div>
-          </div>
+          </div> */}
 
           {/* Notifications */}
           <Link to={"/dashboard/notifications"}>
@@ -205,11 +208,11 @@ export default function DashboardHeader() {
               >
                 <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                   <AvatarImage
-                    src="/placeholder.svg?height=40&width=40"
-                    alt="User"
+                    src={admin?.profileImage || "/placeholder.svg?height=40&width=40"}
+                    alt={admin?.name || "Admin"}
                   />
                   <AvatarFallback className="bg-white text-[#017783] text-xs sm:text-sm font-semibold">
-                    DA
+                    {admin?.name?.substring(0, 2).toUpperCase() || "AD"}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -218,19 +221,19 @@ export default function DashboardHeader() {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    Dance Admin
+                    {admin?.name || "Admin"}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    admin@danceattix.com
+                    {admin?.email || "admin@naibrly.com"}
                   </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/dashboard/settings/profile')}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/dashboard/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>

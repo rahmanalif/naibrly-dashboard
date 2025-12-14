@@ -5,40 +5,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import flag from "../../../assets/flag.png";
 import { MdOutlineKeyboardArrowLeft } from "react-icons/md";
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { getAdminProfile } from "../../../services/settingsService";
-import { toast } from "sonner";
+import { useAdmin } from "@/contexts/AdminContext";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const response = await getAdminProfile();
-      if (response.success) {
-        const admin = response.data.admin;
-        setProfile({
-          name: `${admin.firstName || ""} ${admin.lastName || ""}`.trim(),
-          email: admin.email,
-          phone: admin.phone,
-          avatar: admin.profileImage?.url || "",
-          role: admin.adminRole || admin.role
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      toast.error(error?.message || 'Failed to load profile');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { admin, loading } = useAdmin();
 
   if (loading) {
     return (
@@ -105,13 +76,13 @@ const Profile = () => {
           <div className="md:col-span-1 bg-white p-6 rounded-lg shadow-md flex flex-col items-center">
             <Avatar className="h-40 w-40 mb-4">
               <AvatarImage
-                src={profile?.avatar || "https://images.app.goo.gl/mrJyRYZVPjsik1j19"}
-                alt={profile?.name || "Admin"}
+                src={admin?.profileImage || "https://images.app.goo.gl/mrJyRYZVPjsik1j19"}
+                alt={admin?.name || "Admin"}
               />
-              <AvatarFallback>{profile?.name?.substring(0, 2).toUpperCase() || "AD"}</AvatarFallback>
+              <AvatarFallback>{admin?.name?.substring(0, 2).toUpperCase() || "AD"}</AvatarFallback>
             </Avatar>
             <p className="text-lg font-medium text-gray-800">Profile</p>
-            <p className="text-gray-600">{profile?.role || "Admin"}</p>
+            <p className="text-gray-600">{admin?.role || "Admin"}</p>
           </div>
 
           {/* Information Fields */}
@@ -125,7 +96,7 @@ const Profile = () => {
               </Label>
               <Input
                 id="name"
-                value={profile?.name || ""}
+                value={admin?.name || ""}
                 readOnly
                 className="bg-gray-50 border border-gray-200 text-gray-800 py-2 px-3 rounded-md w-full focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
@@ -140,7 +111,7 @@ const Profile = () => {
               </Label>
               <Input
                 id="email"
-                value={profile?.email || ""}
+                value={admin?.email || ""}
                 readOnly
                 className="bg-gray-50 border border-gray-200 text-gray-800 py-2 px-3 rounded-md w-full focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
@@ -164,7 +135,7 @@ const Profile = () => {
                 </div>
                 <Input
                   id="phone"
-                  value={profile?.phone?.replace('+880', '') || ""}
+                  value={admin?.phone?.replace('+880', '') || ""}
                   readOnly
                   type="tel"
                   className="bg-gray-50 border border-gray-200 text-gray-800 py-2 px-3 rounded-md w-full focus:outline-none focus:ring-1 focus:ring-teal-500"
